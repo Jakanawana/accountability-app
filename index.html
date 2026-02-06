@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Show Up</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+
+<style>
+body{
+font-family:system-ui;
+background:#f4efe9;
+margin:0;
+padding:1rem;
+color:#222;
+}
+
+h1{
+text-align:center;
+margin-bottom:1rem;
+}
+
+.panel{
+background:white;
+padding:1rem;
+border-radius:14px;
+margin-bottom:1rem;
+box-shadow:0 4px 10px rgba(0,0,0,.05);
+}
+
+input,button{
+width:100%;
+padding:.7rem;
+margin-top:.5rem;
+font-size:1rem;
+}
+
+button{
+border:none;
+border-radius:10px;
+background:#6b7b6b;
+color:white;
+}
+
+#lockScreen{
+position:fixed;
+inset:0;
+background:#111;
+color:white;
+display:none;
+align-items:center;
+justify-content:center;
+text-align:center;
+padding:2rem;
+z-index:999;
+}
+
+#lockBox{
+max-width:320px;
+}
+
+#lockBox button{
+margin-top:.8rem;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Show up.</h1>
+
+<div class="panel">
+<input id="taskTitle" placeholder="What are you supposed to do?">
+<input id="taskTime" type="time">
+<button onclick="addTask()">Commit</button>
+</div>
+
+<div class="panel" id="taskList"></div>
+
+<div id="lockScreen">
+<div id="lockBox">
+<h2 id="lockText"></h2>
+<button onclick="startTask()">I’m doing it now</button>
+<button onclick="avoidTask()">I avoided it</button>
+</div>
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+let escalation = 0;
+let activeTask = null;
+
+function save(){
+localStorage.setItem("tasks", JSON.stringify(tasks));
+render();
+}
+
+function addTask(){
+let title = document.getElementById("taskTitle").value;
+let time = document.getElementById("taskTime").value;
+
+if(!title || !time) return;
+
+let now = new Date();
+let [h,m] = time.split(":");
+now.setHours(h,m,0,0);
+
+tasks.push({
+id: Date.now(),
+title,
+start: now.getTime(),
+done:false
+});
+
+save();
+}
+
+function render(){
+let list = document.getElementById("taskList");
+list.innerHTML = "";
+
+if(tasks.length===0){
+list.innerHTML="<p>No commitments yet.</p>";
+return;
+}
+
+tasks.forEach(t=>{
+if(t.done) return;
+let div=document.createElement("div");
+div.textContent=t.title;
+list.appendChild(div);
+});
+}
+
+function checkTasks(){
+let now = Date.now();
+
+tasks.forEach(t=>{
+if(!t.done && now > t.start){
+activeTask = t;
+triggerLock();
+}
+});
+}
+
+function triggerLock(){
+let tones = [
+"You said you’d do this.",
+"You’re avoiding it.",
+"Still not moving.",
+"We’re not ignoring this anymore."
+];
+
+document.getElementById("lockText").innerText =
+tones[Math.min(escalation, tones.length-1)]
++ "\n\n" + activeTask.title;
+
+document.getElementById("lockScreen").style.display="flex";
+
+escalation++;
+}
+
+function startTask(){
+document.getElementById("lockScreen").style.display="none";
+setTimeout(triggerLock, 5*60000);
+}
+
+function avoidTask(){
+activeTask.start = Date.now() + 15*60000;
+document.getElementById("lockScreen").style.display="none";
+save();
+}
+
+setInterval(checkTasks, 60000);
+
+render();
+
+if("serviceWorker" in navigator){
+navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+
+</body>
+</html>
+
