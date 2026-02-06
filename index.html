@@ -272,10 +272,61 @@ save();
 setInterval(checkTasks,60000);
 
 render();
+  /* ---------- OPTIONS PANEL LOGIC ---------- */
+
+let optionsOpen=false;
+
+function toggleOptions(){
+
+let panel=document.getElementById("optionsPanel");
+
+if(!panel)return;
+
+optionsOpen=!optionsOpen;
+
+panel.style.display=optionsOpen?"block":"none";
+
+}
+
+/* ---------- TEST MODE ---------- */
+
+let testTask={
+title:"Test task",
+escalation:0,
+avoids:0
+};
+
+document.addEventListener("change",e=>{
+if(e.target.id==="testToggle"){
+document.getElementById("testControls").style.display=
+e.target.checked?"block":"none";
+}
+});
+
+function devTrigger(){
+triggerLock(testTask);
+}
+
+function devEscalate(){
+testTask.escalation++;
+triggerLock(testTask);
+}
+
+function devReset(){
+testTask.escalation=0;
+alert("Test escalation reset.");
+}
+
+/* ---------- GEAR BUTTON CLICK ---------- */
+
+document.getElementById("gearButton")
+.addEventListener("click",toggleOptions);
+
 </script>
 
 </body>
 </html>
+
 
 
 
