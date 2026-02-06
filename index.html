@@ -89,7 +89,6 @@ margin-top:.8rem;
 
 <script>
 let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-let escalation = 0;
 let activeTask = null;
 
 function save(){
@@ -98,28 +97,30 @@ render();
 }
 
 function addTask(){
-let title = document.getElementById("taskTitle").value;
-let time = document.getElementById("taskTime").value;
+let title=document.getElementById("taskTitle").value;
+let time=document.getElementById("taskTime").value;
+if(!title||!time)return;
 
-if(!title || !time) return;
-
-let now = new Date();
-let [h,m] = time.split(":");
+let now=new Date();
+let [h,m]=time.split(":");
 now.setHours(h,m,0,0);
 
 tasks.push({
-id: Date.now(),
+id:Date.now(),
 title,
-start: now.getTime(),
-done:false
+start:now.getTime(),
+done:false,
+escalation:0,
+avoids:0,
+lastPrompt:0
 });
 
 save();
 }
 
 function render(){
-let list = document.getElementById("taskList");
-list.innerHTML = "";
+let list=document.getElementById("taskList");
+list.innerHTML="";
 
 if(tasks.length===0){
 list.innerHTML="<p>No commitments yet.</p>";
@@ -127,61 +128,92 @@ return;
 }
 
 tasks.forEach(t=>{
-if(t.done) return;
+if(t.done)return;
 let div=document.createElement("div");
-div.textContent=t.title;
+div.textContent=
+t.title+
+(t.avoids>0?` (avoided ${t.avoids}x)`:"");
 list.appendChild(div);
 });
 }
 
 function checkTasks(){
-let now = Date.now();
+let now=Date.now();
 
 tasks.forEach(t=>{
-if(!t.done && now > t.start){
-activeTask = t;
-triggerLock();
+if(t.done)return;
+
+if(now>t.start){
+
+if(!t.lastPrompt){
+t.lastPrompt=now;
+triggerLock(t);
+}
+
+else if(now - t.lastPrompt > 10*60000){
+t.escalation++;
+t.lastPrompt=now;
+triggerLock(t);
+}
+
 }
 });
 }
 
-function triggerLock(){
-let tones = [
+function triggerLock(task){
+activeTask=task;
+
+let tones=[
 "You said you’d do this.",
 "You’re avoiding it.",
 "Still not moving.",
-"We’re not ignoring this anymore."
+"This keeps happening.",
+"We’re not letting this slide."
 ];
 
-document.getElementById("lockText").innerText =
-tones[Math.min(escalation, tones.length-1)]
-+ "\n\n" + activeTask.title;
+document.getElementById("lockText").innerText=
+tones[Math.min(task.escalation,tones.length-1)]
++"\n\n"+task.title;
 
 document.getElementById("lockScreen").style.display="flex";
-
-escalation++;
 }
 
 function startTask(){
 document.getElementById("lockScreen").style.display="none";
-setTimeout(triggerLock, 5*60000);
+
+setTimeout(()=>{
+activeTask.escalation++;
+triggerLock(activeTask);
+},5*60000);
 }
 
 function avoidTask(){
-activeTask.start = Date.now() + 15*60000;
+
+activeTask.avoids++;
+
+if(activeTask.avoids>=2){
+
+document.getElementById("lockText").innerText=
+"You’ve avoided this multiple times.\n\nWe’re not rescheduling it again.";
+
+return;
+}
+
+activeTask.start=Date.now()+15*60000;
+activeTask.lastPrompt=0;
+
 document.getElementById("lockScreen").style.display="none";
+
 save();
 }
 
-setInterval(checkTasks, 60000);
+setInterval(checkTasks,60000);
 
 render();
 
-if("serviceWorker" in navigator){
-navigator.serviceWorker.register("service-worker.js");
-}
 </script>
 
 </body>
 </html>
+
 
