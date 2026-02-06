@@ -33,3 +33,6 @@ testTask.escalation=0;
 alert("Test escalation reset.");
 }
 
+document.getElementById("gearButton")
+.addEventListener("click",toggleOptions);
+
