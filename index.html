@@ -67,6 +67,14 @@ margin-top:.8rem;
 
 </head>
 
+  <div class="panel">
+<h3>Test Mode</h3>
+<button onclick="devMakeOverdue()">Make first task overdue</button>
+<button onclick="devEscalate()">Escalate active task</button>
+<button onclick="devTrigger()">Trigger lock screen</button>
+<button onclick="devReset()">Reset escalation</button>
+</div>
+
 <body>
 
 <h1>Show up.</h1>
@@ -211,9 +219,35 @@ setInterval(checkTasks,60000);
 
 render();
 
+  function devMakeOverdue(){
+if(tasks.length===0)return;
+tasks[0].start=Date.now()-60000;
+save();
+}
+
+function devEscalate(){
+if(!activeTask)return;
+activeTask.escalation++;
+triggerLock(activeTask);
+}
+
+function devTrigger(){
+if(tasks.length===0)return;
+triggerLock(tasks[0]);
+}
+
+function devReset(){
+if(!activeTask)return;
+activeTask.escalation=0;
+activeTask.avoids=0;
+save();
+alert("Escalation reset.");
+}
+
 </script>
 
 </body>
 </html>
+
 
 
