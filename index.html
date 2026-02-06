@@ -68,6 +68,10 @@ margin-top:.8rem;
 </head>
 
 <body>
+  
+<div style="position:fixed;top:10px;right:10px;">
+<button onclick="toggleOptions()">⚙️</button>
+</div>
 
 <h1>Show up.</h1>
 
@@ -79,6 +83,33 @@ margin-top:.8rem;
 </div>
 
 <div class="panel" id="taskList"></div>
+
+  <div id="optionsPanel" style="
+display:none;
+position:fixed;
+inset:0;
+background:#000c;
+color:white;
+z-index:998;
+padding:2rem;
+">
+
+<h2>Options</h2>
+
+<label>
+<input type="checkbox" id="testToggle">
+ Enable Test Mode
+</label>
+
+<div id="testControls" style="display:none;margin-top:1rem;">
+<button onclick="devTrigger()">Trigger test lock</button>
+<button onclick="devEscalate()">Escalate test lock</button>
+<button onclick="devReset()">Reset test escalation</button>
+</div>
+
+<br><br> <button onclick="toggleOptions()">Close</button>
+
+</div>
 
 <div id="lockScreen">
 <div id="lockBox">
@@ -226,4 +257,5 @@ render();
 
 </body>
 </html>
+
 
