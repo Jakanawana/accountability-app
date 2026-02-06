@@ -101,7 +101,52 @@ user-select:none;
 <button onclick="addTask()">Commit</button>
 </div>
 
+  <div class="panel">
+<h3>Today</h3>
+<div style="
+width:100%;
+height:18px;
+background:#ddd;
+border-radius:10px;
+overflow:hidden;
+">
+<div id="dayBar" style="
+height:100%;
+width:0%;
+background:linear-gradient(90deg,#4caf50,#ff5252);
+transition:.3s;
+"></div>
+</div>
+</div>
+
 <div class="panel" id="taskList"></div>
+
+  <div id="optionsPanel" style="
+display:none;
+position:fixed;
+inset:0;
+background:#000c;
+color:white;
+z-index:998;
+padding:2rem;
+">
+
+<h2>Options</h2>
+
+<label>
+<input type="checkbox" id="testToggle">
+ Enable Test Mode
+</label>
+
+<div id="testControls" style="display:none;margin-top:1rem;">
+<button onclick="devTrigger()">Trigger test lock</button>
+<button onclick="devEscalate()">Escalate test lock</button>
+<button onclick="devReset()">Reset test escalation</button>
+</div>
+
+<br><br> <button onclick="toggleOptions()">Close</button>
+
+</div>
 
   <div id="optionsPanel" style="
 display:none;
@@ -134,6 +179,7 @@ padding:2rem;
 <div id="lockBox">
 <h2 id="lockText"></h2>
 <button onclick="startTask()">I’m doing it now</button>
+<button onclick="completeTask()">I finished it</button>
 <button onclick="avoidTask()">I avoided it</button>
 </div>
 </div>
@@ -145,6 +191,8 @@ let activeTask = null;
 function save(){
 localStorage.setItem("tasks", JSON.stringify(tasks));
 render();
+  updateDayBar();
+
 }
 
 function addTask(){
@@ -167,8 +215,10 @@ duration,
 done:false,
 escalation:0,
 avoids:0,
-lastPrompt:0
+lastPrompt:0,
+day:new Date().toDateString()
 });
+
 
 save();
 }
@@ -322,10 +372,46 @@ alert("Test escalation reset.");
 document.getElementById("gearButton")
 .addEventListener("click",toggleOptions);
 
+  function completeTask(){
+
+activeTask.done=true;
+
+document.getElementById("lockScreen").style.display="none";
+
+save();
+updateDayBar();
+}
+
+  function updateDayBar(){
+
+let today=new Date().toDateString();
+
+let todayTasks=tasks.filter(t=>t.day===today);
+
+if(todayTasks.length===0){
+document.getElementById("dayBar").style.width="0%";
+return;
+}
+
+let score=0;
+
+todayTasks.forEach(t=>{
+if(t.done)score+=1;
+else if(t.avoids>=2)score-=1;
+});
+
+let percent=((score+todayTasks.length)/
+(2*todayTasks.length))*100;
+
+document.getElementById("dayBar").style.width=
+Math.max(0,percent)+"%";
+}
+
 </script>
 
 </body>
 </html>
+
 
 
 
