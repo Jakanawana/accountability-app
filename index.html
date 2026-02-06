@@ -16,10 +16,7 @@ padding:1rem;
 color:#222;
 }
 
-h1{
-text-align:center;
-margin-bottom:1rem;
-}
+h1{text-align:center;margin-bottom:1rem;}
 
 .panel{
 background:white;
@@ -43,27 +40,7 @@ background:#6b7b6b;
 color:white;
 }
 
-#lockScreen{
-position:fixed;
-inset:0;
-background:#111;
-color:white;
-display:none;
-align-items:center;
-justify-content:center;
-text-align:center;
-padding:2rem;
-z-index:999;
-}
-
-#lockBox{
-max-width:320px;
-}
-
-#lockBox button{
-margin-top:.8rem;
-}
-  #gearButton{
+#gearButton{
 position:fixed;
 top:12px;
 right:12px;
@@ -78,21 +55,47 @@ font-size:20px;
 box-shadow:0 4px 10px rgba(0,0,0,.15);
 cursor:pointer;
 z-index:1000;
-user-select:none;
 }
 
+#lockScreen{
+position:fixed;
+inset:0;
+background:#111;
+color:white;
+display:none;
+align-items:center;
+justify-content:center;
+text-align:center;
+padding:2rem;
+z-index:999;
+}
+
+#lockBox{max-width:320px;}
+#lockBox button{margin-top:.8rem;}
 </style>
 
 </head>
 
 <body>
-  
-<div id="gearButton">
-⚙️
-</div>
 
+<div id="gearButton">⚙️</div>
 
 <h1>Show up.</h1>
+
+<!-- Progress Bar -->
+
+<div class="panel">
+<h3>Today</h3>
+<div style="width:100%;height:18px;background:#ddd;border-radius:10px;overflow:hidden;">
+<div id="dayBar" style="
+height:100%;
+width:0%;
+background:linear-gradient(90deg,#4caf50,#ff5252);
+transition:.3s;"></div>
+</div>
+</div>
+
+<!-- Task Input -->
 
 <div class="panel">
 <input id="taskTitle" placeholder="What are you supposed to do?">
@@ -101,35 +104,22 @@ user-select:none;
 <button onclick="addTask()">Commit</button>
 </div>
 
-  <div class="panel">
-<h3>Today</h3>
-<div style="
-width:100%;
-height:18px;
-background:#ddd;
-border-radius:10px;
-overflow:hidden;
-">
-<div id="dayBar" style="
-height:100%;
-width:0%;
-background:linear-gradient(90deg,#4caf50,#ff5252);
-transition:.3s;
-"></div>
-</div>
+<!-- Task List -->
+
+<div class="panel" id="taskList">
+<p>No commitments yet.</p>
 </div>
 
-<div class="panel" id="taskList"></div>
+<!-- Options Panel -->
 
-  <div id="optionsPanel" style="
+<div id="optionsPanel" style="
 display:none;
 position:fixed;
 inset:0;
 background:#000c;
 color:white;
 z-index:998;
-padding:2rem;
-">
+padding:2rem;">
 
 <h2>Options</h2>
 
@@ -148,52 +138,39 @@ padding:2rem;
 
 </div>
 
-  <div id="optionsPanel" style="
-display:none;
-position:fixed;
-inset:0;
-background:#000c;
-color:white;
-z-index:998;
-padding:2rem;
-">
-
-<h2>Options</h2>
-
-<label>
-<input type="checkbox" id="testToggle">
- Enable Test Mode
-</label>
-
-<div id="testControls" style="display:none;margin-top:1rem;">
-<button onclick="devTrigger()">Trigger test lock</button>
-<button onclick="devEscalate()">Escalate test lock</button>
-<button onclick="devReset()">Reset test escalation</button>
-</div>
-
-<br><br> <button onclick="toggleOptions()">Close</button>
-
-</div>
+<!-- Lock Screen -->
 
 <div id="lockScreen">
 <div id="lockBox">
 <h2 id="lockText"></h2>
-<button onclick="startTask()">I’m doing it now</button>
 <button onclick="completeTask()">I finished it</button>
+<button onclick="startTask()">I’m doing it now</button>
 <button onclick="avoidTask()">I avoided it</button>
 </div>
 </div>
 
 <script>
+
+/* ---------- LOAD + CLEAN DATA ---------- */
+
 let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+
+// remove legacy tasks without duration
+tasks = tasks.filter(t => t.duration);
+
+/* ---------- STATE ---------- */
+
 let activeTask = null;
+
+/* ---------- SAVE ---------- */
 
 function save(){
 localStorage.setItem("tasks", JSON.stringify(tasks));
 render();
-  updateDayBar();
-
+updateDayBar();
 }
+
+/* ---------- ADD TASK ---------- */
 
 function addTask(){
 
@@ -219,11 +196,13 @@ lastPrompt:0,
 day:new Date().toDateString()
 });
 
-
 save();
 }
 
+/* ---------- RENDER ---------- */
+
 function render(){
+
 let list=document.getElementById("taskList");
 list.innerHTML="";
 
@@ -233,6 +212,7 @@ return;
 }
 
 tasks.forEach(t=>{
+
 if(t.done)return;
 
 let end=new Date(t.start+(t.duration*60000));
@@ -240,17 +220,26 @@ let end=new Date(t.start+(t.duration*60000));
 let div=document.createElement("div");
 div.textContent=
 t.title+
-" — ends "+end.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+
+" — ends "+
+end.toLocaleTimeString([],{
+hour:'2-digit',
+minute:'2-digit'
+})+
 (t.avoids>0?` (avoided ${t.avoids}x)`:"");
 
 list.appendChild(div);
+
 });
 }
 
+/* ---------- CHECK OVERDUE ---------- */
+
 function checkTasks(){
+
 let now=Date.now();
 
 tasks.forEach(t=>{
+
 if(t.done)return;
 
 let endTime=t.start+(t.duration*60000);
@@ -272,7 +261,10 @@ triggerLock(t);
 });
 }
 
+/* ---------- LOCK ---------- */
+
 function triggerLock(task){
+
 activeTask=task;
 
 let tones=[
@@ -290,6 +282,14 @@ tones[Math.min(task.escalation,tones.length-1)]
 document.getElementById("lockScreen").style.display="flex";
 }
 
+/* ---------- ACTIONS ---------- */
+
+function completeTask(){
+activeTask.done=true;
+document.getElementById("lockScreen").style.display="none";
+save();
+}
+
 function startTask(){
 document.getElementById("lockScreen").style.display="none";
 
@@ -304,10 +304,8 @@ function avoidTask(){
 activeTask.avoids++;
 
 if(activeTask.avoids>=2){
-
 document.getElementById("lockText").innerText=
 "You’ve avoided this multiple times.\n\nWe’re not rescheduling it again.";
-
 return;
 }
 
@@ -319,70 +317,9 @@ document.getElementById("lockScreen").style.display="none";
 save();
 }
 
-setInterval(checkTasks,60000);
+/* ---------- PROGRESS ---------- */
 
-render();
-  /* ---------- OPTIONS PANEL LOGIC ---------- */
-
-let optionsOpen=false;
-
-function toggleOptions(){
-
-let panel=document.getElementById("optionsPanel");
-
-if(!panel)return;
-
-optionsOpen=!optionsOpen;
-
-panel.style.display=optionsOpen?"block":"none";
-
-}
-
-/* ---------- TEST MODE ---------- */
-
-let testTask={
-title:"Test task",
-escalation:0,
-avoids:0
-};
-
-document.addEventListener("change",e=>{
-if(e.target.id==="testToggle"){
-document.getElementById("testControls").style.display=
-e.target.checked?"block":"none";
-}
-});
-
-function devTrigger(){
-triggerLock(testTask);
-}
-
-function devEscalate(){
-testTask.escalation++;
-triggerLock(testTask);
-}
-
-function devReset(){
-testTask.escalation=0;
-alert("Test escalation reset.");
-}
-
-/* ---------- GEAR BUTTON CLICK ---------- */
-
-document.getElementById("gearButton")
-.addEventListener("click",toggleOptions);
-
-  function completeTask(){
-
-activeTask.done=true;
-
-document.getElementById("lockScreen").style.display="none";
-
-save();
-updateDayBar();
-}
-
-  function updateDayBar(){
+function updateDayBar(){
 
 let today=new Date().toDateString();
 
@@ -407,12 +344,44 @@ document.getElementById("dayBar").style.width=
 Math.max(0,percent)+"%";
 }
 
+/* ---------- OPTIONS ---------- */
+
+let optionsOpen=false;
+
+function toggleOptions(){
+let panel=document.getElementById("optionsPanel");
+optionsOpen=!optionsOpen;
+panel.style.display=optionsOpen?"block":"none";
+}
+
+document.getElementById("gearButton")
+.addEventListener("click",toggleOptions);
+
+/* ---------- TEST MODE ---------- */
+
+let testTask={title:"Test task",escalation:0};
+
+document.addEventListener("change",e=>{
+if(e.target.id==="testToggle"){
+document.getElementById("testControls").style.display=
+e.target.checked?"block":"none";
+}
+});
+
+function devTrigger(){triggerLock(testTask);}
+function devEscalate(){testTask.escalation++;triggerLock(testTask);}
+function devReset(){testTask.escalation=0;}
+
+/* ---------- START ---------- */
+
+setInterval(checkTasks,60000);
+
+render();
+updateDayBar();
+
 </script>
 
 </body>
 </html>
-
-
-
 
 
