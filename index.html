@@ -721,7 +721,6 @@ function appendUserBubble(text){
   container.scrollTop = container.scrollHeight;
 }
 
-const dialogue = {
 /* ---------- CHARACTER DIALOGUE ENGINE (rich, escalated) ---------- */
 
 /*
@@ -729,7 +728,6 @@ const dialogue = {
   - dialogue[type][result] => array of entries { escalation: N, text: "long multi-line reply" }
   - getDialogue chooses the highest escalation <= task.escalation and returns one message
 */
-
 const dialogue = {
   general: {
     completed: [
@@ -756,17 +754,17 @@ const dialogue = {
       { escalation: 0, text:
 `You beat the bed. Proud — but don’t let it go to your head.
 You got up and didn’t crawl back under. That’s already stealing a piece of the day.
-What was first? Shower, stretch, or doomscroll avoidance?”`},
+What was first? Shower, stretch, or doomscroll avoidance?`},
       { escalation: 1, text:
 `Oh. You actually got up on time. Miracles happen.
 Look at you, slightly less pathetic this morning.
-Tell me: first move after rising — phone or actual movement?”`},
+Tell me: first move after rising — phone or actual movement?`},
       { escalation: 2, text:
 `Good. You stood up. Bare minimum, but I’ll take it.
-You better not be using the rest of the morning to sulk in bed. What’s your first adult action?”`},
+You better not be using the rest of the morning to sulk in bed. What’s your first adult action?`},
       { escalation: 3, text:
 `You got your lazy carcass upright. Wow — hold the parade.
-Do the thing that proves you deserve oxygen: describe what you did next.”`}
+Do the thing that proves you deserve oxygen: describe what you did next.`}
     ],
 
     partial: [
@@ -776,11 +774,11 @@ If you’re proud of 20% effort, fine. If not, try attacking it in the next twen
 Did you snooze or get up after one ring?`},
       { escalation: 1, text:
 `You snoozed. Again? Cute. One more snooze and I’ll put your alarm on a loop of embarrassing voicemails.
-How long did you stall for?”`},
+How long did you stall for?`},
       { escalation: 2, text:
 `Snoozing is just lying to yourself with better branding.
 Next time, get up before I upgrade you to salty passive-aggressive notifications.
-How many times did you hit snooze?”`},
+How many times did you hit snooze?`},
       { escalation: 3, text:
 `You laid there like an overcooked noodle and hit snooze like it owed you money.
 I expect cleanup: get out of bed within five minutes next time or I’ll escalate the mocking.`}
@@ -789,10 +787,10 @@ I expect cleanup: get out of bed within five minutes next time or I’ll escalat
     avoided: [
       { escalation: 0, text:
 `You lost to the bed. I get it — beds are great con artists — but you made a promise.
-What happened? Overslept, ignored alarm, or soul-decided to die for an extra hour?”`},
+What happened? Overslept, ignored alarm, or soul-decided to die for an extra hour?`},
       { escalation: 1, text:
 `Skipped it. That pattern’s starting. Bed wants you to stay; life wants you to show up.
-Be honest: was it exhaustion or deliberate avoidance?”`},
+Be honest: was it exhaustion or deliberate avoidance?`},
       { escalation: 2, text:
 `You ignored the alarm. Again. That’s not charming, that’s a habit that eats days.
 If you keep this up we’re renaming you Sleeping Beauty but without the castle.`},
@@ -815,10 +813,37 @@ If you can’t, pick one five-minute action and do it. I promise I’ll mock les
 `If everything feels like quicksand, that’s crap — but staying in bed makes it worse.
 Stand up, even if you wobble. I’ll roast you less if you actually take one step.`}
     ]
-  },
+  }
 
-  /* You can add other types (music, exercise etc) with the same escalated-entry format */
+  // you can add other types (music, exercise, etc.) below using the same format
 };
+
+/* getDialogue picks the best entry <= escalation, falls back gracefully */
+function getDialogue(task, result){
+  const type = (task && task.type) ? task.type : 'general';
+  const escal = Math.max(0, Math.floor(task && (typeof task.escalation !== 'undefined') ? task.escalation : 0));
+
+  const pack = dialogue[type] || dialogue.general;
+  const pool = pack[result];
+
+  if(!pool || pool.length === 0){
+    return task && task.title ? `...${task.title}` : "Okay.";
+  }
+
+  // eligible: escalation <= current escalation
+  const eligible = pool.filter(entry => (typeof entry.escalation === 'undefined' || entry.escalation <= escal));
+  if(eligible.length === 0){
+    // fallback: pick a random entry from pool
+    const any = pool[Math.floor(Math.random()*pool.length)];
+    return (typeof any === 'string') ? any : (any.text || "");
+  }
+
+  const maxEsc = Math.max(...eligible.map(e => (typeof e.escalation === 'undefined' ? 0 : e.escalation)));
+  const top = eligible.filter(e => (typeof e.escalation === 'undefined' ? 0 : e.escalation) === maxEsc);
+  const chosen = top[Math.floor(Math.random()*top.length)];
+  return (typeof chosen === 'string') ? chosen : (chosen.text || "");
+}
+
 
 
 function getDialogue(task, result){
@@ -936,6 +961,15 @@ function applyCustomStylesFromStorage(){
   document.documentElement.style.setProperty('--accent1', a1);
   document.documentElement.style.setProperty('--accent2', a2);
   document.documentElement.style.setProperty('--primary', `hsl(${accentHue} ${Math.max(20, accentSat-20)}% ${Math.max(20, accentLight-24)}%)`);
+
+  // update dayBar live preview
+  const dayBar = document.getElementById('dayBar');
+  if (dayBar) {
+    const a1 = `hsl(${accentHue} ${accentSat}% ${accentLight}%)`;
+    const a2 = `hsl(${(accentHue + 30) % 360} ${accentSat}% ${accentLight}%)`;
+    dayBar.style.background = `linear-gradient(90deg, ${a1}, ${a2})`;
+  }
+
  
 }
 
@@ -1553,6 +1587,7 @@ updateDayBar();
 
 </body>
 </html>
+
 
 
 
