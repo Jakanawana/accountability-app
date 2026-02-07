@@ -722,54 +722,134 @@ function appendUserBubble(text){
 }
 
 const dialogue = {
+/* ---------- CHARACTER DIALOGUE ENGINE (rich, escalated) ---------- */
+
+/*
+  Structure:
+  - dialogue[type][result] => array of entries { escalation: N, text: "long multi-line reply" }
+  - getDialogue chooses the highest escalation <= task.escalation and returns one message
+*/
+
+const dialogue = {
   general: {
-    completed: ["You did it. I’m impressed.","Task done. Good.","You followed through — proud of you."],
-    partial: ["You started. That counts… barely.","Half effort is still effort.","You touched the task. Growth."],
-    avoided: ["You avoided it.","You said you would — you didn’t.","Avoidance again. Pattern forming."]
+    completed: [
+      { escalation: 0, text: "Nice. You did the thing. Small wins stack up, you know." },
+      { escalation: 1, text: "There you go — decent. Not flawless, but it’s something. Keep that trash momentum." }
+    ],
+    partial: [
+      { escalation: 0, text: "Okay, you started. That’s not nothing. Do it again tomorrow and we upgrade from 'okay' to 'good'." },
+      { escalation: 1, text: "You half-did it. Cute. Try for the whole thing next time and I might compliment you twice." }
+    ],
+    avoided: [
+      { escalation: 0, text: "You avoided it. Classic. That was on the to-do list, not the suggestion box." },
+      { escalation: 1, text: "You blew it off. Again. This is how habits evaporate." }
+    ],
+    overwhelmed: [
+      { escalation: 0, text: "Feeling overwhelmed is fine. Don’t push right now if you truly can’t — small step later." },
+      { escalation: 1, text: "Overwhelmed? Okay. Breathe. Then pick one tiny, undemanding thing and do that." }
+    ]
   },
+
   wake: {
-    completed: ["Oh? Up on time.","You beat the bed. Proud.","Good boy. Morning win."],
-    partial: ["Eventually conscious.","Late — but alive.","You crawled out. Counts."],
-    avoided: ["You lost to your bed.","Alarm rang. You ignored it.","Sleep won again."]
+    /* escalation 0 = playful snark; 1 = sharper; 2 = rude bully; 3 = ruthless bully */
+    completed: [
+      { escalation: 0, text:
+`You beat the bed. Proud — but don’t let it go to your head.
+You got up and didn’t crawl back under. That’s already stealing a piece of the day.
+What was first? Shower, stretch, or doomscroll avoidance?”`},
+      { escalation: 1, text:
+`Oh. You actually got up on time. Miracles happen.
+Look at you, slightly less pathetic this morning.
+Tell me: first move after rising — phone or actual movement?”`},
+      { escalation: 2, text:
+`Good. You stood up. Bare minimum, but I’ll take it.
+You better not be using the rest of the morning to sulk in bed. What’s your first adult action?”`},
+      { escalation: 3, text:
+`You got your lazy carcass upright. Wow — hold the parade.
+Do the thing that proves you deserve oxygen: describe what you did next.”`}
+    ],
+
+    partial: [
+      { escalation: 0, text:
+`You started — slow, but started. Snooze counted as resistance, not victory.
+If you’re proud of 20% effort, fine. If not, try attacking it in the next twenty minutes.
+Did you snooze or get up after one ring?`},
+      { escalation: 1, text:
+`You snoozed. Again? Cute. One more snooze and I’ll put your alarm on a loop of embarrassing voicemails.
+How long did you stall for?”`},
+      { escalation: 2, text:
+`Snoozing is just lying to yourself with better branding.
+Next time, get up before I upgrade you to salty passive-aggressive notifications.
+How many times did you hit snooze?”`},
+      { escalation: 3, text:
+`You laid there like an overcooked noodle and hit snooze like it owed you money.
+I expect cleanup: get out of bed within five minutes next time or I’ll escalate the mocking.`}
+    ],
+
+    avoided: [
+      { escalation: 0, text:
+`You lost to the bed. I get it — beds are great con artists — but you made a promise.
+What happened? Overslept, ignored alarm, or soul-decided to die for an extra hour?”`},
+      { escalation: 1, text:
+`Skipped it. That pattern’s starting. Bed wants you to stay; life wants you to show up.
+Be honest: was it exhaustion or deliberate avoidance?”`},
+      { escalation: 2, text:
+`You ignored the alarm. Again. That’s not charming, that’s a habit that eats days.
+If you keep this up we’re renaming you Sleeping Beauty but without the castle.`},
+      { escalation: 3, text:
+`You ghosted an entire morning — real commitment to failure there.
+Fix: set a second, louder alarm and actually stand up when it rings. No excuses.`}
+    ],
+
+    overwhelmed: [
+      { escalation: 0, text:
+`Overwhelmed mornings are real. If your brain’s a swamp right now, don’t storm the castle.
+One tiny goal: sit up. Put feet on floor. Breathe. That is enough for now.`},
+      { escalation: 1, text:
+`You’re overwhelmed. Fine. Pause the guilt, take the tiniest action: brush teeth or splash water.
+Report back. I’ll be mean later, but I’ll also notice progress.`},
+      { escalation: 2, text:
+`Overwhelmed is not a permission slip for disappearing. Do something — anything — that counts as movement.
+If you can’t, pick one five-minute action and do it. I promise I’ll mock less if you try.`},
+      { escalation: 3, text:
+`If everything feels like quicksand, that’s crap — but staying in bed makes it worse.
+Stand up, even if you wobble. I’ll roast you less if you actually take one step.`}
+    ]
   },
-  shower: {
-    completed: ["Clean. Civilised. Stunning.","You smell less like depression nest.","Proud of you for basic hygiene."],
-    partial: ["Half shower?","Speedrun hygiene I see.","You rinsed. Bare minimum."],
-    avoided: ["Skipped showering.","Avoiding hygiene now?","You just didn’t wash."]
-  },
-  facecare: {
-    completed: ["Skin routine done. Glow up era.","Taking care of your face — love that.","Cute and moisturised."],
-    partial: ["Half routine.","You tried. I guess.","Better than nothing."],
-    avoided: ["Skipped face care.","You forgot again?","Your skin is judging you."]
-  },
-  exercise: {
-    completed: ["Worked out. Hot.","Body maintenance complete.","Proud of you, Jak."],
-    partial: ["Half workout.","You started at least.","Baby steps."],
-    avoided: ["You dodged exercise.","Avoiding movement again?","Body’s not gonna train itself."]
-  },
-  music: {
-    completed: ["You made music today. Love that.","Creative and disciplined.","Proud of you, Jak."],
-    partial: ["You opened the project.","You poked at it.","Creative warmup."],
-    avoided: ["You avoided music work.","Scared of your own talent?","Creative avoidance."]
-  },
-  art: {
-    completed: ["You made art. Cute.","Creative brain engaged.","Proud of you."],
-    partial: ["You sketched a bit.","You tried.","Warmup counts."],
-    avoided: ["You avoided art.","Creative block?","You didn’t even start."]
-  },
-  cooking: {
-    completed: ["You fed yourself. Good.","Sustained life successfully.","I like when you eat properly."],
-    partial: ["Snack dinner?","Half effort meal.","Nutrition… adjacent."],
-    avoided: ["You didn’t cook.","Surviving on vibes again?","You skipped eating properly."]
-  }
+
+  /* You can add other types (music, exercise etc) with the same escalated-entry format */
 };
 
+
 function getDialogue(task, result){
-  const pack = dialogue[task.type] || dialogue.general;
+  // normalize inputs
+  const type = (task && task.type) ? task.type : 'general';
+  const escal = Math.max(0, Math.floor(task && task.escalation ? task.escalation : 0));
+
+  // ensure a type exists
+  const pack = dialogue[type] || dialogue.general;
   const pool = pack[result];
-  if(!pool || pool.length === 0) return task.title || "";
-  return pool[Math.floor(Math.random() * pool.length)];
+
+  if(!pool || pool.length === 0){
+    // fallback: if not found, return a simple title or generic line
+    return task && task.title ? `...${task.title}` : "Okay.";
+  }
+
+  // pick entries whose escalation <= current escalation, prefer highest available
+  const eligible = pool.filter(entry => (typeof entry.escalation === 'undefined' || entry.escalation <= escal));
+  if(eligible.length === 0){
+    // nothing <= escalation? fallback to lowest escalation entry
+    return pool[Math.floor(Math.random()*pool.length)].text || (pool[Math.floor(Math.random()*pool.length)]);
+  }
+
+  // find highest escalation value among eligible, then pick among entries with that escalation
+  const maxEsc = Math.max(...eligible.map(e=>e.escalation || 0));
+  const topEntries = eligible.filter(e=> (e.escalation || 0) === maxEsc);
+
+  const chosen = topEntries[Math.floor(Math.random()*topEntries.length)];
+  return (typeof chosen === 'string') ? chosen : (chosen.text || '');
 }
+
 
 /* ---------- STATE ---------- */
 
@@ -1473,5 +1553,6 @@ updateDayBar();
 
 </body>
 </html>
+
 
 
