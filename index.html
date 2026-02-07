@@ -24,11 +24,12 @@
     box-shadow:0 4px 10px rgba(0,0,0,.05);
   }
 
-  input,button,select{
+  input,button,select,textarea{
     width:100%;
     padding:.7rem;
     margin-top:.5rem;
     font-size:1rem;
+    box-sizing:border-box;
   }
 
   button{
@@ -36,6 +37,16 @@
     border-radius:10px;
     background:#6b7b6b;
     color:white;
+  }
+
+  .smallBtn{
+    padding:.4rem .6rem;
+    font-size:.9rem;
+    border-radius:8px;
+    background:#eee;
+    color:#222;
+    border:none;
+    cursor:pointer;
   }
 
   /* Weekday selector */
@@ -77,7 +88,7 @@
 
   #lockBox{max-width:420px;}
   #lockBox button{margin-top:.6rem;display:block;width:100%;}
-  .taskRow{padding:.6rem;border-bottom:1px solid #eee;}
+  .taskRow{padding:.6rem;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;}
   .taskMeta{font-size:.85rem;color:#666;margin-top:.2rem;}
   .typeBadge{font-weight:600;margin-right:.5rem;}
   .small{font-size:.85rem;padding:.4rem;border-radius:8px;background:#eee;}
@@ -102,7 +113,7 @@
   }
 
   /* Options panel */
-  #optionsPanel{
+  #optionsPanel, #editPanel{
     display:none;
     position:fixed;
     inset:0;
@@ -113,20 +124,25 @@
     box-sizing:border-box;
   }
 
-  #optionsInner{
-    max-width:480px;
+  #optionsInner, #editInner{
+    max-width:520px;
     margin:0 auto;
     background:#111;
     padding:1rem;
     border-radius:12px;
   }
 
-  #optionsInner h2{margin-top:0;}
+  #optionsInner h2, #editInner h2{margin-top:0;}
   #testControls button{margin-top:.5rem;}
 
   /* Commitments label */
   .subhead{font-size:0.9rem;color:#666;margin-bottom:.5rem}
   .muted{color:#666;font-size:0.85rem}
+
+  .actions {display:flex; gap:.5rem; align-items:center;}
+  .actionBtn {background:#eee; color:#222; border-radius:8px; padding:.4rem .6rem; border:none; cursor:pointer;}
+  .danger {background:#ff6b6b; color:white;}
+  .primary {background:#6b7b6b; color:white;}
 </style>
 </head>
 
@@ -237,6 +253,57 @@
   </div>
 </div>
 
+<!-- EDIT PANEL (for templates) -->
+<div id="editPanel">
+  <div id="editInner">
+    <h2>Edit commitment</h2>
+
+    <input id="editTitle" placeholder="Task title">
+    <input id="editTime" type="time">
+    <input id="editDuration" type="number" placeholder="Duration (minutes)">
+
+    <select id="editType">
+      <option value="shower">Shower</option>
+      <option value="facecare">Face routine</option>
+      <option value="teeth">Brush teeth</option>
+      <option value="exercise">Exercise</option>
+      <option value="stretch">Stretch</option>
+      <option value="sleep">Sleep routine</option>
+      <option value="wake">Get out of bed</option>
+      <option value="morning">Morning routine</option>
+      <option value="room">Clean room</option>
+      <option value="laundry">Laundry</option>
+      <option value="dishes">Dishes</option>
+      <option value="music">Music work</option>
+      <option value="art">Art practice</option>
+      <option value="project">Project work</option>
+      <option value="youtube">Limit YouTube</option>
+      <option value="social">Limit scrolling</option>
+      <option value="errands">Errands</option>
+      <option value="general">General</option>
+    </select>
+
+    <div style="margin-top:.6rem;">
+      <div style="font-size:.9rem;margin-bottom:.4rem;">Repeat on:</div>
+      <div class="dayGrid" id="editDayGrid">
+        <div class="dayBtn" data-day="0">Sun</div>
+        <div class="dayBtn" data-day="1">Mon</div>
+        <div class="dayBtn" data-day="2">Tue</div>
+        <div class="dayBtn" data-day="3">Wed</div>
+        <div class="dayBtn" data-day="4">Thu</div>
+        <div class="dayBtn" data-day="5">Fri</div>
+        <div class="dayBtn" data-day="6">Sat</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:.6rem;margin-top:1rem;">
+      <button class="primary" onclick="saveEdit()">Save changes</button>
+      <button class="danger" onclick="deleteTemplateFromModal()">Delete</button>
+      <button onclick="closeEdit()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- OPTIONS PANEL (hidden by default) -->
 <div id="optionsPanel">
   <div id="optionsInner">
@@ -304,14 +371,21 @@ function getDialogue(task, event) {
 /* ---------- STATE ---------- */
 
 let activeTask = null;
+let editingTemplateId = null;
 
-/* ---------- UI: day selector behavior ---------- */
+/* ---------- UI: day selector behavior (create fn to apply to any grid) ---------- */
 
-document.querySelectorAll(".dayBtn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    btn.classList.toggle("active");
+function wireDayGrid(gridRootSelector){
+  const root = document.querySelector(gridRootSelector);
+  if(!root) return;
+  root.querySelectorAll(".dayBtn").forEach(btn=>{
+    btn.onclick = ()=> btn.classList.toggle("active");
   });
-});
+}
+
+// wire both grids
+wireDayGrid("#dayGrid");
+wireDayGrid("#editDayGrid");
 
 /* ---------- SAVE / RENDER / HELPERS ---------- */
 
@@ -340,20 +414,20 @@ function renderToday(){
 
   active.forEach(t => {
     const div = document.createElement("div");
+
     div.className = "taskRow";
 
     const startDate = new Date(t.start);
     const endDate = new Date(t.start + t.duration * 60000);
 
-    div.innerHTML = `
-      <div class="flex">
-        <div class="typeBadge small">${t.type}</div>
-        <div style="flex:1">
-          <div><strong>${t.title}</strong></div>
-          <div class="taskMeta">${startDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} — ends ${endDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
-        </div>
-      </div>
-    `;
+    const left = document.createElement("div");
+    left.innerHTML = `<div style="font-weight:600">${t.title}</div><div class="taskMeta">${startDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} — ends ${endDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>`;
+
+    const right = document.createElement("div");
+    right.innerHTML = `<div class="small">${t.type}</div>`;
+
+    div.appendChild(left);
+    div.appendChild(right);
 
     list.appendChild(div);
   });
@@ -371,8 +445,8 @@ function renderCommitments(){
   }
 
   templates.forEach(t => {
-    const div = document.createElement("div");
-    div.className = "taskRow";
+    const row = document.createElement("div");
+    row.className = "taskRow";
 
     // humanize days
     const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -382,17 +456,21 @@ function renderCommitments(){
     const mm = (typeof t.startMinute !== "undefined") ? String(t.startMinute).padStart(2,'0') : new Date(t.start).getMinutes();
     const timeStr = `${hh}:${String(mm).padStart(2,'0')}`;
 
-    div.innerHTML = `
-      <div class="flex">
-        <div class="typeBadge small">${t.type}</div>
-        <div style="flex:1">
-          <div><strong>${t.title}</strong></div>
-          <div class="taskMeta">On: ${daysStr} · ${timeStr} · ${t.duration} min</div>
-        </div>
-      </div>
+    const left = document.createElement("div");
+    left.style.flex = "1";
+    left.innerHTML = `<div style="font-weight:600">${t.title}</div><div class="taskMeta">On: ${daysStr} · ${timeStr} · ${t.duration} min</div>`;
+
+    const right = document.createElement("div");
+    right.className = "actions";
+    right.innerHTML = `
+      <button class="actionBtn" onclick="openEditModal(${t.id})">Edit</button>
+      <button class="actionBtn danger" onclick="deleteTemplate(${t.id})">Delete</button>
     `;
 
-    list.appendChild(div);
+    row.appendChild(left);
+    row.appendChild(right);
+
+    list.appendChild(row);
   });
 }
 
@@ -404,10 +482,9 @@ function addTask() {
   const duration = parseInt(document.getElementById("taskDuration").value, 10);
   const type = document.getElementById("taskType").value;
 
-  const selectedDays = [...document.querySelectorAll(".dayBtn.active")].map(b => parseInt(b.dataset.day, 10));
+  const selectedDays = [...document.querySelectorAll("#dayGrid .dayBtn.active")].map(b => parseInt(b.dataset.day, 10));
 
   if (!title || !time || !duration) {
-    // small UX hint: brief flash or console
     console.warn("Missing title/time/duration");
     return;
   }
@@ -440,7 +517,7 @@ function addTask() {
     document.getElementById("taskTitle").value = "";
     document.getElementById("taskTime").value = "";
     document.getElementById("taskDuration").value = "";
-    document.querySelectorAll(".dayBtn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll("#dayGrid .dayBtn").forEach(b => b.classList.remove("active"));
     return;
   }
 
@@ -551,6 +628,8 @@ function spawnRecurringForTemplate(template){
     lastPrompt: 0,
     day: new Date().toDateString()
   });
+
+  save();
 }
 
 /* ---------- CHECK OVERDUE & TRIGGER LOCK ---------- */
@@ -625,6 +704,80 @@ function closeLock() {
   document.getElementById("lockScreen").style.display = "none";
 }
 
+/* ---------- EDIT / DELETE TEMPLATE UI ---------- */
+
+function openEditModal(id){
+  const template = tasks.find(t=>t.id===id && t.template);
+  if(!template) return alert("Template not found.");
+
+  editingTemplateId = id;
+
+  // populate fields
+  document.getElementById("editTitle").value = template.title || "";
+  const hh = typeof template.startHour !== "undefined" ? String(template.startHour).padStart(2,'0') : new Date(template.start || Date.now()).getHours();
+  const mm = typeof template.startMinute !== "undefined" ? String(template.startMinute).padStart(2,'0') : new Date(template.start || Date.now()).getMinutes();
+  document.getElementById("editTime").value = `${hh}:${String(mm).padStart(2,'0')}`;
+  document.getElementById("editDuration").value = template.duration || 10;
+  document.getElementById("editType").value = template.type || "general";
+
+  // clear edit day grid active states then set per template.days
+  document.querySelectorAll("#editDayGrid .dayBtn").forEach(b=>b.classList.remove("active"));
+  (template.days || []).forEach(d=>{
+    const btn = document.querySelector(`#editDayGrid .dayBtn[data-day='${d}']`);
+    if(btn) btn.classList.add("active");
+  });
+
+  document.getElementById("editPanel").style.display = "block";
+}
+
+function closeEdit(){
+  editingTemplateId = null;
+  document.getElementById("editPanel").style.display = "none";
+}
+
+function saveEdit(){
+  if(!editingTemplateId) return;
+  const idx = tasks.findIndex(t=>t.id===editingTemplateId && t.template);
+  if(idx === -1) return alert("Template not found (save).");
+
+  const title = document.getElementById("editTitle").value.trim();
+  const time = document.getElementById("editTime").value;
+  const duration = parseInt(document.getElementById("editDuration").value,10);
+  const type = document.getElementById("editType").value;
+  const days = [...document.querySelectorAll("#editDayGrid .dayBtn.active")].map(b=>parseInt(b.dataset.day,10));
+
+  if(!title || !time || !duration) return alert("Please provide title, time, duration.");
+
+  const [h, m] = time.split(":").map(Number);
+
+  // update template
+  tasks[idx].title = title;
+  tasks[idx].type = type;
+  tasks[idx].startHour = h;
+  tasks[idx].startMinute = m;
+  tasks[idx].duration = duration;
+  tasks[idx].days = days;
+
+  save();
+
+  // spawn today's instance if today's included and not already present
+  spawnRecurringForTemplate(tasks[idx]);
+
+  closeEdit();
+}
+
+function deleteTemplate(id){
+  if(!confirm("Delete this recurring commitment? This will stop it from spawning future instances.")) return;
+  tasks = tasks.filter(t => !(t.id===id && t.template));
+  save();
+}
+
+function deleteTemplateFromModal(){
+  if(!editingTemplateId) return;
+  deleteTemplate(editingTemplateId);
+  closeEdit();
+}
+
 /* ---------- DAY BAR (today scoring) ---------- */
 
 function updateDayBar() {
@@ -666,7 +819,6 @@ document.addEventListener("change", (e) => {
 
 /* sandbox dev functions (do NOT touch real tasks) */
 function devTrigger(){
-  // show lock with sandbox task (won't be saved)
   const fake = {...testTask, title: "TEST: " + (testTask.title || "TEST")};
   activeTask = fake;
   const line = getDialogue(fake, "missed");
