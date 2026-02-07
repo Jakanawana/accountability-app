@@ -82,12 +82,56 @@
   .typeBadge{font-weight:600;margin-right:.5rem;}
   .small{font-size:.85rem;padding:.4rem;border-radius:8px;background:#eee;}
   .flex{display:flex;gap:.5rem;align-items:center;}
+
+  /* GEAR (settings) */
+  #gearButton{
+    position:fixed;
+    top:12px;
+    right:12px;
+    width:44px;
+    height:44px;
+    background:white;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+    cursor:pointer;
+    z-index:1100;
+  }
+
+  /* Options panel */
+  #optionsPanel{
+    display:none;
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,0.6);
+    color:white;
+    z-index:1200;
+    padding:2rem;
+    box-sizing:border-box;
+  }
+
+  #optionsInner{
+    max-width:480px;
+    margin:0 auto;
+    background:#111;
+    padding:1rem;
+    border-radius:12px;
+  }
+
+  #optionsInner h2{margin-top:0;}
+  #testControls button{margin-top:.5rem;}
 </style>
 </head>
 
 <body>
 
 <h1>Show up.</h1>
+
+<!-- GEAR BUTTON -->
+<div id="gearButton" title="Options">⚙️</div>
 
 <!-- Progress -->
 <div class="panel">
@@ -178,6 +222,28 @@
   </div>
 </div>
 
+<!-- OPTIONS PANEL (hidden by default) -->
+<div id="optionsPanel">
+  <div id="optionsInner">
+    <h2>Options</h2>
+
+    <label style="display:block;margin-bottom:.6rem;">
+      <input type="checkbox" id="testToggle"> Enable Test Mode
+    </label>
+
+    <div id="testControls" style="display:none;">
+      <div style="margin-bottom:.4rem;color:#ddd;">Test controls (sandbox - no changes to real tasks)</div>
+      <button onclick="devTrigger()">Trigger test lock</button>
+      <button onclick="devEscalate()">Escalate test lock</button>
+      <button onclick="devReset()">Reset test escalation</button>
+    </div>
+
+    <div style="margin-top:1rem;">
+      <button onclick="toggleOptions()">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ---------- BOOTSTRAP & NORMALIZE ---------- */
 
@@ -186,12 +252,10 @@ let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
 
 // Normalize: ensure objects have required fields; remove clearly invalid ones
 tasks = (tasks || []).map(t => {
-  // if legacy missing duration, skip (we don't rely on those)
   if (!t) return null;
   if (typeof t.duration === "undefined" || t.duration === null) {
     return null;
   }
-  // ensure arrays exist
   if (!Array.isArray(t.days)) t.days = t.days ? (Array.isArray(t.days) ? t.days : []) : [];
   if (typeof t.template === "undefined") t.template = !!(t.days && t.days.length > 0 && t.template !== false);
   if (typeof t.type === "undefined") t.type = t.type || "general";
@@ -211,7 +275,6 @@ const packs = {
   exercise: { avoidance: ["You avoided your workout."], interrogation: ["Was it motivation or fatigue?" ], care: ["Body check — are you sore?"] },
   music: { avoidance: ["You avoided music work."], interrogation: ["Which part blocked you?" ], care: ["Creative blocks happen — you okay?"] },
   youtube: { avoidance: ["You watched videos instead."], interrogation: ["How many minutes?" ], care: ["Short break okay — but did you want to do the task?"] },
-  // more packs added later
 };
 
 /* ---------- ROUTER ---------- */
@@ -220,7 +283,6 @@ function getDialogue(task, event) {
   const pack = packs[task.type] || packs.general;
   const lines = pack[event] || [];
   if (!lines.length) return `[${task.type}] → ${event}`;
-  // choose line by escalation (bounded)
   return lines[Math.min(task.escalation || 0, lines.length - 1)];
 }
 
@@ -244,20 +306,11 @@ function save() {
   updateDayBar();
 }
 
-function formatTimeFromMinutes(mins) {
-  const h = String(Math.floor(mins / 60)).padStart(2, "0");
-  const m = String(mins % 60).padStart(2, "0");
-  return `${h}:${m}`;
-}
-
 function render() {
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
-  // show today's non-template tasks and next-up templates (optional)
   const today = new Date().toDateString();
-
-  // Active, non-template tasks
   const active = tasks.filter(t => !t.template && !t.done && new Date(t.day).toDateString() === today);
 
   if (active.length === 0) {
@@ -298,20 +351,17 @@ function addTask() {
 
   if (!title || !time || !duration) return;
 
-  // parse hours/minutes
   const [h, m] = time.split(":").map(Number);
 
-  // If user selected days => create a template recurring task
   if (selectedDays.length > 0) {
     const template = {
       id: Date.now(),
       title,
       type,
-      // store a representative start time (we'll use startHour/startMinute when spawning)
       startHour: h,
       startMinute: m,
       duration,
-      days: selectedDays,       // [0..6]
+      days: selectedDays,
       template: true,
       done: false,
       response: null,
@@ -321,7 +371,6 @@ function addTask() {
     };
     tasks.push(template);
     save();
-    // clear inputs (friendly)
     document.getElementById("taskTitle").value = "";
     document.getElementById("taskTime").value = "";
     document.getElementById("taskDuration").value = "";
@@ -329,11 +378,9 @@ function addTask() {
     return;
   }
 
-  // Otherwise create a one-off task for today at the specified time (if that time is today future; otherwise next day)
   const now = new Date();
   const start = new Date();
   start.setHours(h, m, 0, 0);
-  // if the chosen time is earlier than now, assume it's the nearest occurrence (today already past => schedule tomorrow)
   if (start.getTime() < Date.now()) start.setDate(start.getDate() + 1);
 
   const oneOff = {
@@ -354,7 +401,6 @@ function addTask() {
   tasks.push(oneOff);
   save();
 
-  // clear inputs
   document.getElementById("taskTitle").value = "";
   document.getElementById("taskTime").value = "";
   document.getElementById("taskDuration").value = "";
@@ -364,16 +410,14 @@ function addTask() {
 
 function spawnRecurring() {
   const now = new Date();
-  const todayIdx = now.getDay(); // 0..6
+  const todayIdx = now.getDay();
 
-  // find templates that include today
   const templates = tasks.filter(t => t.template === true);
 
   templates.forEach(t => {
     if (!Array.isArray(t.days) || t.days.length === 0) return;
     if (!t.days.includes(todayIdx)) return;
 
-    // check whether today's instance already exists (non-template with same title and same day)
     const exists = tasks.some(x =>
       !x.template &&
       x.title === t.title &&
@@ -382,14 +426,11 @@ function spawnRecurring() {
 
     if (exists) return;
 
-    // create new instance for today using template's hour/minute
     const start = new Date();
-    // use stored hour/minute if available, otherwise derive from t.start
     let hour = typeof t.startHour !== "undefined" ? t.startHour : new Date(t.start).getHours();
     let minute = typeof t.startMinute !== "undefined" ? t.startMinute : new Date(t.start).getMinutes();
     start.setHours(hour, minute, 0, 0);
 
-    // If the scheduled time is already past for today, we still spawn (so the check can immediately detect missed)
     tasks.push({
       id: Date.now() + Math.floor(Math.random()*1000),
       title: t.title,
@@ -414,22 +455,18 @@ function spawnRecurring() {
 function checkTasks() {
   const now = Date.now();
 
-  tasks.forEach(t => {
-    if (t.template || t.done) return;
-
-    // defensive: if missing duration, skip
-    if (!t.duration) return;
-
+  for (const t of tasks) {
+    if (t.template || t.done) continue;
+    if (!t.duration) continue;
     const endTime = t.start + (t.duration * 60000);
-
     if (now > endTime) {
-      // set as active and open lock (first overdue triggers)
       activeTask = t;
       const line = getDialogue(t, "missed");
       document.getElementById("lockText").innerText = `${line}\n\n[${t.type}] ${t.title}`;
       document.getElementById("lockScreen").style.display = "flex";
+      break; // show one at a time
     }
-  });
+  }
 }
 
 /* ---------- RESPONSE HANDLERS (store responses) ---------- */
@@ -445,7 +482,6 @@ function respondCompleted() {
 function respondPartial() {
   if (!activeTask) return;
   activeTask.response = "partial";
-  // keep activeTask not done, but mark partial — you might want a recheck later
   closeLock();
   save();
 }
@@ -454,12 +490,9 @@ function respondAvoided() {
   if (!activeTask) return;
   activeTask.response = "avoided";
   activeTask.avoids = (activeTask.avoids || 0) + 1;
-  // apply the avoidance logic: if avoided twice, escalate and keep lock closed but log
   if (activeTask.avoids >= 2) {
     activeTask.escalation = (activeTask.escalation || 0) + 1;
-    // keep it logged as avoided; you might want to leave it as missed (not rescheduled)
   } else {
-    // simple leniency: reschedule to +15 minutes
     activeTask.start = Date.now() + 15*60000;
     activeTask.lastPrompt = 0;
   }
@@ -470,7 +503,6 @@ function respondAvoided() {
 function respondOverwhelmed() {
   if (!activeTask) return;
   activeTask.response = "overwhelmed";
-  // small reschedule but keep a care flag
   activeTask.start = Date.now() + 30*60000;
   activeTask.lastPrompt = 0;
   closeLock();
@@ -495,20 +527,52 @@ function closeLock() {
 function updateDayBar() {
   const today = new Date().toDateString();
   const todayTasks = tasks.filter(t => t.day === today && !t.template);
-
   if (todayTasks.length === 0) {
     document.getElementById("dayBar").style.width = "0%";
     return;
   }
-
   let score = 0;
   todayTasks.forEach(t => {
     if (t.response === "completed") score += 1;
     else if (t.response === "avoided") score -= 1;
   });
-
   const percent = ((score + todayTasks.length) / (2 * todayTasks.length)) * 100;
   document.getElementById("dayBar").style.width = Math.max(0, percent) + "%";
+}
+
+/* ---------- OPTIONS + DEV / TEST MODE ---------- */
+
+let optionsOpen = false;
+const testTask = { title: "TEST TASK (sandbox)", type: "test", escalation: 0 };
+
+/* toggle options panel */
+function toggleOptions(){
+  optionsOpen = !optionsOpen;
+  document.getElementById("optionsPanel").style.display = optionsOpen ? "block" : "none";
+}
+
+/* wire gear button */
+document.getElementById("gearButton").addEventListener("click", toggleOptions);
+
+/* test toggle behavior: show/hide dev controls */
+document.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "testToggle") {
+    document.getElementById("testControls").style.display = e.target.checked ? "block" : "none";
+  }
+});
+
+/* sandbox dev functions (do NOT touch real tasks) */
+function devTrigger(){
+  // show lock with sandbox task (won't be saved)
+  triggerLock(testTask);
+}
+function devEscalate(){
+  testTask.escalation = (testTask.escalation || 0) + 1;
+  triggerLock(testTask);
+}
+function devReset(){
+  testTask.escalation = 0;
+  alert("Test escalation reset.");
 }
 
 /* ---------- START: spawn + intervals ---------- */
