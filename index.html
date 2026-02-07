@@ -468,20 +468,6 @@ body {
   </div>
 </div>
 
-    <!-- response buttons (also clickable bubbles via JS) -->
-    <div id="lockButtons" style="margin-top:1rem;">
-      <button class="dialog-btn primary" onclick="respondCompleted()">I did it</button>
-      <button class="dialog-btn" onclick="respondPartial()">I started</button>
-      <button class="dialog-btn" onclick="respondAvoided()">I avoided it</button>
-      <button class="dialog-btn" onclick="respondOverwhelmed()">I was overwhelmed</button>
-      <button class="dialog-btn" onclick="respondReschedule()">Reschedule</button>
-    </div>
-    <button id="lockContinueBtn" class="dialog-btn primary" style="display:none;margin-top:0.75rem;">
-      Got it
-    </button>
-  </div>
-</div>
-
 
 
 <!-- EDIT PANEL (for templates) -->
@@ -1188,12 +1174,6 @@ function closeLock(){
   if(continueBtn) continueBtn.style.display = "none";
   try { document.body.style.overflow = ''; } catch(e){}
 }
-function closeLock(){
-  document.getElementById("lockScreen").style.display = "none";
-  const continueBtn = document.getElementById("lockContinueBtn");
-  if(continueBtn) continueBtn.style.display = "none";
-  try { document.body.style.overflow = ''; } catch(e){}
-}
 
 // ensure opening modal disables page scroll
 function openLockModal(){
@@ -1372,6 +1352,14 @@ function unlockResponses(){
     btn.disabled = false;
     btn.style.opacity = 1;
     btn.style.cursor = 'pointer';
+  });
+}
+
+const continueBtn = document.getElementById("lockContinueBtn");
+if(continueBtn){
+  continueBtn.addEventListener("click", ()=>{
+    closeLock();
+    unlockResponses();
   });
 }
 
