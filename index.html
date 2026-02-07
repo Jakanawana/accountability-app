@@ -156,7 +156,7 @@
     z-index:1100;
   }
 
-  /* Options panel (prettier) */
+  /* Options panel (prettier + scroll) */
   #optionsPanel, #editPanel{
     display:none;
     position:fixed;
@@ -179,6 +179,10 @@
     grid-template-columns: 1fr 320px;
     gap:18px;
     align-items:start;
+
+    /* NEW: prevent cutoff on small/short viewports by making the inner panel scrollable */
+    max-height: calc(100vh - 3rem);
+    overflow: auto;
   }
 
   /* left column stacks */
@@ -395,6 +399,24 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="font-weight:800;font-size:1.05rem">Options</div>
         <div style="font-size:.9rem;color:var(--muted)">Customize appearance</div>
+      </div>
+
+      <!-- DEV MODE CARD (added) -->
+      <div class="controlCard">
+        <div class="controlHeader">Developer / Test Mode <span style="font-size:.85rem;color:var(--muted)">· sandbox</span></div>
+
+        <label style="display:block;margin-bottom:8px;">
+          <input type="checkbox" id="testToggle"> Enable Test Mode (shows dev controls)
+        </label>
+
+        <div id="testControls" style="display:none;">
+          <div style="margin-bottom:8px;color:var(--muted)">Sandbox dev controls — won't modify real templates.</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="smallBtn" onclick="devTrigger()">Trigger test lock</button>
+            <button class="smallBtn" onclick="devEscalate()">Escalate test lock</button>
+            <button class="smallBtn" onclick="devReset()">Reset test escalation</button>
+          </div>
+        </div>
       </div>
 
       <div class="controlCard">
@@ -673,6 +695,13 @@ const rb = document.getElementById('textBlack');
 const rw = document.getElementById('textWhite');
 if(rb) rb.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor('black'); });
 if(rw) rw.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor('white'); });
+
+// show/hide dev controls when checkbox is toggled
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'testToggle') {
+    document.getElementById('testControls').style.display = e.target.checked ? 'block' : 'none';
+  }
+});
 
 // reset button
 const resetBtn = document.getElementById('resetCustom');
@@ -1070,12 +1099,15 @@ let optionsOpen = false;
 const testTask = { title: "TEST TASK (sandbox)", type: "test", escalation: 0 };
 function toggleOptions(){ optionsOpen = !optionsOpen; document.getElementById("optionsPanel").style.display = optionsOpen ? "block" : "none"; }
 document.getElementById("gearButton").addEventListener("click", toggleOptions);
-document.addEventListener("change", (e) => {
-  if (e.target && e.target.id === "testToggle") {
-    document.getElementById("testControls").style.display = e.target.checked ? "block" : "none";
-  }
-});
-function devTrigger(){ const fake = {...testTask, title: "TEST: " + (testTask.title || "TEST")}; activeTask = fake; const line = getDialogue(fake, "missed"); document.getElementById("lockText").innerText = `${line}\n\n[${fake.type}] ${fake.title}`; document.getElementById("lockScreen").style.display = "flex"; }
+
+// dev functions (wired to visible controls)
+function devTrigger(){
+  const fake = {...testTask, title: "TEST: " + (testTask.title || "TEST")};
+  activeTask = fake;
+  const line = getDialogue(fake, "missed");
+  document.getElementById("lockText").innerText = `${line}\n\n[${fake.type}] ${fake.title}`;
+  document.getElementById("lockScreen").style.display = "flex";
+}
 function devEscalate(){ testTask.escalation = (testTask.escalation || 0) + 1; devTrigger(); }
 function devReset(){ testTask.escalation = 0; alert("Test escalation reset."); }
 
