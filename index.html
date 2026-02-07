@@ -28,7 +28,7 @@
     --muted: #a3a6ad;
     --primary: #3a3f45;
     --primary-contrast: #fff;
-    --accent1: #4c6ef5; /* cooler accent */
+    --accent1: #4c6ef5;
     --accent2: #9b5de5;
     --card-shadow: 0 6px 18px rgba(0,0,0,.5);
     --gear-bg: #1a1b1f;
@@ -211,6 +211,11 @@
   /* small color swatches for theme selector */
   .swatch{display:inline-block;width:22px;height:22px;border-radius:6px;margin-right:.5rem;border:1px solid rgba(0,0,0,0.06);vertical-align:middle;}
   .themeRow{display:flex;gap:.6rem;align-items:center;margin-top:.4rem;}
+
+  /* slider style */
+  .sliderRow{display:flex;gap:.6rem;align-items:center;margin-top:.6rem;}
+  .hueValue{min-width:44px;text-align:center;font-weight:600;background:transparent;border:0}
+  input[type="range"]{width:100%;}
 </style>
 </head>
 
@@ -421,6 +426,19 @@
         </label>
       </div>
 
+      <div style="margin-top:12px;font-weight:600;">Accent color</div>
+
+      <!-- Hue slider + color picker -->
+      <div class="sliderRow">
+        <input type="range" id="hueSlider" min="0" max="360" value="150" />
+        <div class="hueValue" id="hueValue">150</div>
+      </div>
+
+      <div style="margin-top:.6rem;display:flex;gap:.6rem;align-items:center;">
+        <input type="color" id="accentColorPicker" value="#4caf50" style="width:56px;padding:0;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"/>
+        <button class="smallBtn" id="resetAccentBtn">Reset accent</button>
+      </div>
+
     </div>
 
     <div style="margin-top:1rem;">
@@ -490,34 +508,161 @@ function wireDayGrid(gridRootSelector){
 wireDayGrid("#dayGrid");
 wireDayGrid("#editDayGrid");
 
-/* ---------- THEME HANDLING ---------- */
+/* ---------- THEME + ACCENT HANDLING ---------- */
 
 const THEME_KEY = "showup_theme";
+const ACCENT_HUE_KEY = "showup_accent_hue";
+const ACCENT_HEX_KEY = "showup_accent_hex";
 
+// apply theme (adds class)
 function applyTheme(name){
-  // remove all theme classes
   document.body.classList.remove("theme-dark","theme-indigo","theme-pink");
   if(name === "dark") document.body.classList.add("theme-dark");
   if(name === "indigo") document.body.classList.add("theme-indigo");
   if(name === "pink") document.body.classList.add("theme-pink");
-  // update radio UI
-  const radios = document.querySelectorAll('input[name="theme"]');
-  radios.forEach(r=>r.checked = (r.value === (name || "light")));
-  // persist
+  document.querySelectorAll('input[name="theme"]').forEach(r=> r.checked = (r.value === (name || "light")));
   try{ localStorage.setItem(THEME_KEY, name || "light"); }catch(e){}
 }
 
-// restore theme on load
+// set accent by hue (0-360). this sets CSS variables --accent1 / --accent2 / --primary
+function applyAccentHue(hue){
+  if(typeof hue === "undefined" || hue === null) return;
+  hue = Number(hue);
+  const h1 = hue;
+  const h2 = (hue + 30) % 360;
+  // use hsl for nicer dynamic colors; saturation/lightness set to pleasant defaults
+  const accent1 = `hsl(${h1} 80% 52%)`;
+  const accent2 = `hsl(${h2} 80% 52%)`;
+  const primary = `hsl(${h1} 28% 36%)`; // darker for primary
+  document.documentElement.style.setProperty('--accent1', accent1);
+  document.documentElement.style.setProperty('--accent2', accent2);
+  document.documentElement.style.setProperty('--primary', primary);
+  // update color input hex to match approximate hue
+  const hex = hslToHex(h1, 80, 52);
+  try{ localStorage.setItem(ACCENT_HUE_KEY, String(hue)); localStorage.setItem(ACCENT_HEX_KEY, hex);}catch(e){}
+  // update UI elements
+  const picker = document.getElementById('accentColorPicker');
+  if(picker) picker.value = hex;
+  const hueValueEl = document.getElementById('hueValue');
+  if(hueValueEl) hueValueEl.innerText = String(hue);
+  const slider = document.getElementById('hueSlider');
+  if(slider) slider.value = String(hue);
+  // update dayBar gradient live
+  const dayBar = document.getElementById('dayBar');
+  if(dayBar) dayBar.style.background = `linear-gradient(90deg, ${accent1}, ${accent2})`;
+}
+
+// convert HSL to hex (inputs: h [0-360], s% [0-100], l% [0-100])
+function hslToHex(h, s, l){
+  s /= 100; l /= 100;
+  const k = n => (n + h/30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const color = l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// convert hex to HSL-ish hue (approx) — used primarily to sync slider when user picks hex color
+function hexToHue(hex){
+  // quick parse
+  hex = hex.replace('#','');
+  if(hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+  const r = parseInt(hex.slice(0,2),16)/255;
+  const g = parseInt(hex.slice(2,4),16)/255;
+  const b = parseInt(hex.slice(4,6),16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h = 0;
+  if(max===min) h = 0;
+  else if(max===r) h = (60 * ((g - b) / (max - min)) + 360) % 360;
+  else if(max===g) h = (60 * ((b - r) / (max - min)) + 120) % 360;
+  else h = (60 * ((r - g) / (max - min)) + 240) % 360;
+  return Math.round(h);
+}
+
+// restore saved accent (hue or hex)
+function restoreAccent(){
+  const savedHue = localStorage.getItem(ACCENT_HUE_KEY);
+  const savedHex = localStorage.getItem(ACCENT_HEX_KEY);
+  if(savedHue !== null){
+    applyAccentHue(Number(savedHue));
+  } else if(savedHex){
+    const h = hexToHue(savedHex);
+    applyAccentHue(h);
+  } else {
+    // nothing saved; leave theme defaults
+  }
+}
+
+// on reset: remove custom accent keys and reapply theme defaults (so themes show their own accents)
+function resetAccentToThemeDefault(){
+  try{ localStorage.removeItem(ACCENT_HUE_KEY); localStorage.removeItem(ACCENT_HEX_KEY); }catch(e){}
+  // reapply theme by re-setting theme (forces CSS variables back to theme values)
+  const theme = localStorage.getItem(THEME_KEY) || "light";
+  applyTheme(theme);
+  // manually update dayBar gradient to whatever var is now
+  const dayBar = document.getElementById('dayBar');
+  dayBar.style.background = `linear-gradient(90deg, var(--accent1), var(--accent2))`;
+  // update UI controls to reflect removed accent
+  const slider = document.getElementById('hueSlider');
+  const picker = document.getElementById('accentColorPicker');
+  if(slider) slider.value = 150;
+  if(picker) picker.value = '#4caf50';
+  const hueValueEl = document.getElementById('hueValue');
+  if(hueValueEl) hueValueEl.innerText = '—';
+}
+
+/* ---------- THEME: restore on load ---------- */
 const savedTheme = localStorage.getItem(THEME_KEY) || "light";
 applyTheme(savedTheme);
+restoreAccent(); // apply any saved custom accent after theme
 
-// wire theme radio controls
+/* wire theme radio controls */
 document.querySelectorAll('input[name="theme"]').forEach(r=>{
   r.addEventListener("change", (e)=>{
     if(!e.target.checked) return;
-    applyTheme(e.target.value === "light" ? "light" : e.target.value);
+    const v = e.target.value === "light" ? "light" : e.target.value;
+    applyTheme(v);
+    // if there's a saved accent, keep it (accent overrides theme) — if not, theme defaults show
+    const savedHue = localStorage.getItem(ACCENT_HUE_KEY);
+    if(savedHue) applyAccentHue(Number(savedHue));
+    // refresh dayBar background
+    const dayBar = document.getElementById('dayBar');
+    dayBar.style.background = `linear-gradient(90deg, var(--accent1), var(--accent2))`;
   });
 });
+
+/* ---------- wire accent controls ---------- */
+const hueSlider = document.getElementById('hueSlider');
+const colorPicker = document.getElementById('accentColorPicker');
+const resetBtn = document.getElementById('resetAccentBtn');
+
+if(hueSlider){
+  hueSlider.addEventListener('input', (e)=>{
+    const val = Number(e.target.value);
+    document.getElementById('hueValue').innerText = String(val);
+    applyAccentHue(val);
+  });
+}
+
+if(colorPicker){
+  colorPicker.addEventListener('input', (e)=>{
+    const hex = e.target.value;
+    const hue = hexToHue(hex);
+    // set slider to hue and apply
+    const s = document.getElementById('hueSlider');
+    if(s) s.value = String(hue);
+    document.getElementById('hueValue').innerText = String(hue);
+    applyAccentHue(hue);
+  });
+}
+
+if(resetBtn){
+  resetBtn.addEventListener('click', ()=>{
+    resetAccentToThemeDefault();
+  });
+}
 
 /* ---------- SAVE / RENDER / HELPERS ---------- */
 
