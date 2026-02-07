@@ -19,6 +19,127 @@
     --card-shadow: 0 4px 10px rgba(0,0,0,.05);
     --gear-bg: #ffffff;
 
+    /* --- dialogue fonts & upgraded modal styles --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Merienda:wght@400;700&display=swap');
+
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* stronger overlay + center modal */
+#lockScreen{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.88);
+  backdrop-filter: blur(6px);
+  color:var(--primary-contrast);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:2rem;
+  z-index:9999;
+}
+
+/* bigger, punchy lockBox */
+#lockBox{
+  width:min(760px, 96vw);
+  max-height:86vh;
+  overflow:hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border-radius:18px;
+  padding:16px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.04);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* speaker header */
+#speakerHeader{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding:6px 8px;
+}
+.speakerAvatar{
+  width:48px;height:48px;border-radius:999px;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary-contrast);
+  font-family:"Merienda", "Inter", sans-serif;
+  box-shadow:0 10px 30px rgba(0,0,0,0.25);
+}
+.speakerName{
+  font-family:"Merienda", "Inter", sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  color:var(--primary-contrast);
+  text-transform:capitalize;
+}
+
+/* dialogue area */
+#dialogueWrap{ display:flex; flex-direction:column; gap:8px; align-items:stretch; }
+#dialogueLines{
+  background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.00));
+  padding:12px;
+  border-radius:12px;
+  overflow:auto;
+  max-height:54vh;
+  box-shadow: inset 0 -8px 24px rgba(0,0,0,0.06);
+}
+
+/* bubble row */
+.dialogue-row{ display:flex; gap:10px; align-items:flex-end; margin:6px 0; }
+.dialogue-row.npc{ justify-content:flex-start; }
+.dialogue-row.user{ justify-content:flex-end; }
+
+/* bubble styles */
+.dialogue-bubble{
+  max-width:78%;
+  padding:12px 14px;
+  border-radius:14px;
+  line-height:1.3;
+  word-break:break-word;
+  box-shadow:0 8px 18px rgba(0,0,0,0.12);
+  font-size:1rem;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+}
+.dialogue-bubble.npc{
+  background: linear-gradient(180deg, var(--accent1), var(--accent2));
+  color:var(--primary-contrast);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-bottom-left-radius:4px;
+}
+.dialogue-bubble.user{
+  background: rgba(255,255,255,0.06);
+  color:var(--text);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-bottom-right-radius:4px;
+}
+
+/* meta row under bubbles */
+#dialogTaskMeta{ font-weight:700; color:var(--muted); margin-top:4px; text-align:center; }
+
+/* transform old buttons into dialog-style action bubbles */
+#lockButtons{ display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin-top:10px; }
+.dialog-btn{
+  background:transparent;
+  border-radius:12px;
+  padding:10px 12px;
+  border:1px solid rgba(0,0,0,0.06);
+  cursor:pointer;
+  font-weight:600;
+  box-shadow:0 8px 20px rgba(0,0,0,0.08);
+}
+.dialog-btn.primary{ background:var(--primary); color:var(--primary-contrast); border: none; }
+.dialog-btn.danger{ background:#ff6b6b; color:white; border: none; }
+.dialog-btn:active{ transform:translateY(1px); }
+
+/* make cancel less prominent */
+#lockBox .cancelBtn{ background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.06); opacity:0.9; }
+
+
     /* parameters (mirrors JS defaults) */
     --bg-h: 30;
     --bg-s: 24%;
@@ -334,16 +455,17 @@
     </div>
 
     <!-- response buttons (also clickable bubbles via JS) -->
-    <div id="lockButtons" style="margin-top:1rem; display:grid; gap:8px;">
-      <button onclick="respondCompleted()">I did it</button>
-      <button onclick="respondPartial()">I started</button>
-      <button onclick="respondAvoided()">I avoided it</button>
-      <button onclick="respondOverwhelmed()">I was overwhelmed</button>
-      <button onclick="respondReschedule()">Reschedule</button>
-    </div>
+   <div id="lockButtons" style="margin-top:1rem;">
+  <button class="dialog-btn primary" onclick="respondCompleted()">I did it</button>
+  <button class="dialog-btn" onclick="respondPartial()">I started</button>
+  <button class="dialog-btn" onclick="respondAvoided()">I avoided it</button>
+  <button class="dialog-btn" onclick="respondOverwhelmed()">I was overwhelmed</button>
+  <button class="dialog-btn" onclick="respondReschedule()">Reschedule</button>
+</div>
+
 
     <div style="margin-top:12px;">
-      <button style="background:#333;margin-top:8px;" onclick="closeLock()">Cancel</button>
+   <button class="cancelBtn" style="background:#333;margin-top:8px;" onclick="closeLock()">Cancel</button>
     </div>
   </div>
 </div>
@@ -557,27 +679,20 @@ localStorage.setItem("tasks", JSON.stringify(tasks));
 
   /* ---------- Dialogue bubble renderer ---------- */
 
-function appendNpcBubble(text){
+function appendNpcBubble(text, speakerName){
   const container = document.getElementById('dialogueLines');
   if(!container) return;
 
-  const div = document.createElement('div');
-  div.style.margin = '8px 0';
-  div.style.display = 'flex';
+  const row = document.createElement('div');
+  row.className = 'dialogue-row npc';
 
-  div.innerHTML = `
-    <div style="
-      max-width:78%;
-      padding:10px;
-      border-radius:12px;
-      background:rgba(255,255,255,0.08);
-      color:var(--primary-contrast);
-    ">
-      ${text}
-    </div>
-  `;
+  const bubble = document.createElement('div');
+  bubble.className = 'dialogue-bubble npc';
+  bubble.innerText = text || '';
 
-  container.appendChild(div);
+  // optional speaker label above bubble for first message in modal
+  row.appendChild(bubble);
+  container.appendChild(row);
   container.scrollTop = container.scrollHeight;
 }
 
@@ -585,26 +700,18 @@ function appendUserBubble(text){
   const container = document.getElementById('dialogueLines');
   if(!container) return;
 
-  const div = document.createElement('div');
-  div.style.margin = '8px 0';
-  div.style.display = 'flex';
-  div.style.justifyContent = 'flex-end';
+  const row = document.createElement('div');
+  row.className = 'dialogue-row user';
 
-  div.innerHTML = `
-    <div style="
-      max-width:78%;
-      padding:10px;
-      border-radius:12px;
-      background:rgba(0,0,0,0.06);
-      color:var(--text);
-    ">
-      ${text}
-    </div>
-  `;
+  const bubble = document.createElement('div');
+  bubble.className = 'dialogue-bubble user';
+  bubble.innerText = text || '';
 
-  container.appendChild(div);
+  row.appendChild(bubble);
+  container.appendChild(row);
   container.scrollTop = container.scrollHeight;
 }
+
 
 const dialogue = {
   general: {
@@ -1089,7 +1196,44 @@ function respondReschedule(){
   handleUserResponse('rescheduled');
 }
 
-function closeLock(){ document.getElementById("lockScreen").style.display="none"; }
+// sets header speaker (call before showing modal)
+function setSpeakerName(name){
+  // ensure speaker header exists
+  let header = document.getElementById('speakerHeader');
+  if(!header){
+    // create header at the top of lockBox
+    const lockBox = document.getElementById('lockBox');
+    header = document.createElement('div');
+    header.id = 'speakerHeader';
+    header.innerHTML = `
+      <div class="speakerAvatar">Y</div>
+      <div>
+        <div class="speakerName" id="speakerNameEl">${name || 'yaoi guy'}</div>
+        <div style="font-size:.85rem;color:rgba(255,255,255,0.7);">tap a response</div>
+      </div>
+    `;
+    lockBox.insertBefore(header, lockBox.firstChild);
+  } else {
+    const nameEl = document.getElementById('speakerNameEl');
+    if(nameEl) nameEl.innerText = name || 'yaoi guy';
+  }
+}
+
+// close + restore page scrolling
+function closeLock(){
+  document.getElementById("lockScreen").style.display = "none";
+  try { document.body.style.overflow = ''; } catch(e){}
+}
+
+// ensure opening modal disables page scroll
+function openLockModal(){
+  try{ document.body.style.overflow = 'hidden'; }catch(e){}
+  document.getElementById('lockScreen').style.display = 'flex';
+  // prevent clicks on overlay from closing or interacting unintentionally
+  const lockBox = document.getElementById('lockBox');
+  lockBox.addEventListener('click', e => e.stopPropagation());
+}
+
 
 /* ---------- EDIT/DELETE TEMPLATES ---------- */
 
@@ -1248,5 +1392,6 @@ updateDayBar();
 
 </body>
 </html>
+
 
 
