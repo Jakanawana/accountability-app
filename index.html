@@ -837,20 +837,7 @@ function getDialogue(task, result){
   return (typeof chosen === 'string') ? chosen : (chosen.text || "");
 }
 
-  // pick entries whose escalation <= current escalation, prefer highest available
-  const eligible = pool.filter(entry => (typeof entry.escalation === 'undefined' || entry.escalation <= escal));
-  if(eligible.length === 0){
-    // nothing <= escalation? fallback to lowest escalation entry
-    return pool[Math.floor(Math.random()*pool.length)].text || (pool[Math.floor(Math.random()*pool.length)]);
-  }
 
-  // find highest escalation value among eligible, then pick among entries with that escalation
-  const maxEsc = Math.max(...eligible.map(e=>e.escalation || 0));
-  const topEntries = eligible.filter(e=> (e.escalation || 0) === maxEsc);
-
-  const chosen = topEntries[Math.floor(Math.random()*topEntries.length)];
-  return (typeof chosen === 'string') ? chosen : (chosen.text || '');
-}
 
 // show a temporary "Got it" reply button when NPC text contains a question
 function showQuickReplyIfNeeded(npcText){
@@ -1709,6 +1696,7 @@ updateDayBar();
 
 </body>
 </html>
+
 
 
 
