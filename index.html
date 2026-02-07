@@ -123,6 +123,10 @@
 
   #optionsInner h2{margin-top:0;}
   #testControls button{margin-top:.5rem;}
+
+  /* Commitments label */
+  .subhead{font-size:0.9rem;color:#666;margin-bottom:.5rem}
+  .muted{color:#666;font-size:0.85rem}
 </style>
 </head>
 
@@ -198,9 +202,20 @@
   <button onclick="addTask()">Commit</button>
 </div>
 
-<!-- Task List -->
-<div class="panel" id="taskList">
-  <p>No commitments yet.</p>
+<!-- Today's Tasks Panel -->
+<div class="panel">
+  <div class="subhead">Today's tasks</div>
+  <div id="taskList">
+    <p class="muted">No commitments for today yet.</p>
+  </div>
+</div>
+
+<!-- Commitments (templates) Panel -->
+<div class="panel">
+  <div class="subhead">Commitments (recurring templates)</div>
+  <div id="commitList">
+    <p class="muted">No recurring commitments yet.</p>
+  </div>
 </div>
 
 <!-- Lock Screen -->
@@ -250,7 +265,7 @@
 // Load tasks and normalize older entries
 let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
 
-// Normalize: ensure objects have required fields; remove clearly invalid ones
+// Normalization: keep items which have duration; convert legacy shapes gently
 tasks = (tasks || []).map(t => {
   if (!t) return null;
   if (typeof t.duration === "undefined" || t.duration === null) {
@@ -307,6 +322,11 @@ function save() {
 }
 
 function render() {
+  renderToday();
+  renderCommitments();
+}
+
+function renderToday(){
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
@@ -314,7 +334,7 @@ function render() {
   const active = tasks.filter(t => !t.template && !t.done && new Date(t.day).toDateString() === today);
 
   if (active.length === 0) {
-    list.innerHTML = "<p>No commitments yet.</p>";
+    list.innerHTML = "<p class='muted'>No commitments for today yet.</p>";
     return;
   }
 
@@ -339,6 +359,43 @@ function render() {
   });
 }
 
+function renderCommitments(){
+  const list = document.getElementById("commitList");
+  list.innerHTML = "";
+
+  const templates = tasks.filter(t => t.template);
+
+  if (templates.length === 0) {
+    list.innerHTML = "<p class='muted'>No recurring commitments yet.</p>";
+    return;
+  }
+
+  templates.forEach(t => {
+    const div = document.createElement("div");
+    div.className = "taskRow";
+
+    // humanize days
+    const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const daysStr = (Array.isArray(t.days) && t.days.length) ? t.days.map(d => dayNames[d]).join(", ") : "—";
+
+    const hh = (typeof t.startHour !== "undefined") ? String(t.startHour).padStart(2,'0') : new Date(t.start).getHours();
+    const mm = (typeof t.startMinute !== "undefined") ? String(t.startMinute).padStart(2,'0') : new Date(t.start).getMinutes();
+    const timeStr = `${hh}:${String(mm).padStart(2,'0')}`;
+
+    div.innerHTML = `
+      <div class="flex">
+        <div class="typeBadge small">${t.type}</div>
+        <div style="flex:1">
+          <div><strong>${t.title}</strong></div>
+          <div class="taskMeta">On: ${daysStr} · ${timeStr} · ${t.duration} min</div>
+        </div>
+      </div>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
 /* ---------- ADD TASK (handles template vs one-off) ---------- */
 
 function addTask() {
@@ -349,11 +406,16 @@ function addTask() {
 
   const selectedDays = [...document.querySelectorAll(".dayBtn.active")].map(b => parseInt(b.dataset.day, 10));
 
-  if (!title || !time || !duration) return;
+  if (!title || !time || !duration) {
+    // small UX hint: brief flash or console
+    console.warn("Missing title/time/duration");
+    return;
+  }
 
   const [h, m] = time.split(":").map(Number);
 
   if (selectedDays.length > 0) {
+    // create template (recurring) task
     const template = {
       id: Date.now(),
       title,
@@ -370,7 +432,11 @@ function addTask() {
       day: new Date().toDateString()
     };
     tasks.push(template);
+    // spawn today's instance immediately if today matches
+    spawnRecurringForTemplate(template);
     save();
+
+    // clear inputs
     document.getElementById("taskTitle").value = "";
     document.getElementById("taskTime").value = "";
     document.getElementById("taskDuration").value = "";
@@ -378,6 +444,7 @@ function addTask() {
     return;
   }
 
+  // one-off: schedule for the next occurrence of that time (today/tomorrow)
   const now = new Date();
   const start = new Date();
   start.setHours(h, m, 0, 0);
@@ -401,6 +468,7 @@ function addTask() {
   tasks.push(oneOff);
   save();
 
+  // clear inputs
   document.getElementById("taskTitle").value = "";
   document.getElementById("taskTime").value = "";
   document.getElementById("taskDuration").value = "";
@@ -410,7 +478,7 @@ function addTask() {
 
 function spawnRecurring() {
   const now = new Date();
-  const todayIdx = now.getDay();
+  const todayIdx = now.getDay(); // 0..6
 
   const templates = tasks.filter(t => t.template === true);
 
@@ -426,6 +494,7 @@ function spawnRecurring() {
 
     if (exists) return;
 
+    // create today's instance
     const start = new Date();
     let hour = typeof t.startHour !== "undefined" ? t.startHour : new Date(t.start).getHours();
     let minute = typeof t.startMinute !== "undefined" ? t.startMinute : new Date(t.start).getMinutes();
@@ -450,6 +519,40 @@ function spawnRecurring() {
   save();
 }
 
+/* spawn for a single template immediately (used when user creates a template) */
+function spawnRecurringForTemplate(template){
+  const now = new Date();
+  const todayIdx = now.getDay();
+  if (!Array.isArray(template.days) || !template.days.includes(todayIdx)) return;
+
+  const exists = tasks.some(x =>
+    !x.template &&
+    x.title === template.title &&
+    new Date(x.day).toDateString() === new Date().toDateString()
+  );
+  if (exists) return;
+
+  const start = new Date();
+  let hour = typeof template.startHour !== "undefined" ? template.startHour : new Date(template.start).getHours();
+  let minute = typeof template.startMinute !== "undefined" ? template.startMinute : new Date(template.start).getMinutes();
+  start.setHours(hour, minute, 0, 0);
+
+  tasks.push({
+    id: Date.now() + Math.floor(Math.random()*1000),
+    title: template.title,
+    type: template.type || "general",
+    start: start.getTime(),
+    duration: template.duration,
+    days: template.days.slice(),
+    template: false,
+    done: false,
+    response: null,
+    escalation: 0,
+    lastPrompt: 0,
+    day: new Date().toDateString()
+  });
+}
+
 /* ---------- CHECK OVERDUE & TRIGGER LOCK ---------- */
 
 function checkTasks() {
@@ -464,7 +567,7 @@ function checkTasks() {
       const line = getDialogue(t, "missed");
       document.getElementById("lockText").innerText = `${line}\n\n[${t.type}] ${t.title}`;
       document.getElementById("lockScreen").style.display = "flex";
-      break; // show one at a time
+      break; // show only one lock at a time
     }
   }
 }
@@ -564,11 +667,15 @@ document.addEventListener("change", (e) => {
 /* sandbox dev functions (do NOT touch real tasks) */
 function devTrigger(){
   // show lock with sandbox task (won't be saved)
-  triggerLock(testTask);
+  const fake = {...testTask, title: "TEST: " + (testTask.title || "TEST")};
+  activeTask = fake;
+  const line = getDialogue(fake, "missed");
+  document.getElementById("lockText").innerText = `${line}\n\n[${fake.type}] ${fake.title}`;
+  document.getElementById("lockScreen").style.display = "flex";
 }
 function devEscalate(){
   testTask.escalation = (testTask.escalation || 0) + 1;
-  triggerLock(testTask);
+  devTrigger();
 }
 function devReset(){
   testTask.escalation = 0;
