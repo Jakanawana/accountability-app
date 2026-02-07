@@ -71,7 +71,7 @@ z-index:999;
 }
 
 #lockBox{max-width:320px;}
-#lockBox button{margin-top:.8rem;}
+#lockBox button{margin-top:.6rem;}
 </style>
 
 </head>
@@ -95,7 +95,7 @@ transition:.3s;"></div>
 </div>
 </div>
 
-<!-- Task Input + Pack Tagging -->
+<!-- Task Input -->
 
 <div class="panel">
 <input id="taskTitle" placeholder="What are you supposed to do?">
@@ -103,11 +103,46 @@ transition:.3s;"></div>
 <input id="taskDuration" type="number" placeholder="Duration (minutes)">
 
 <select id="taskType">
+
+<!-- Hygiene -->
+
+<option value="shower">Shower</option>
+<option value="facecare">Face routine</option>
+<option value="teeth">Brush teeth</option>
+
+<!-- Body -->
+
+<option value="exercise">Exercise</option>
+<option value="stretch">Stretch</option>
+<option value="sleep">Sleep routine</option>
+
+<!-- Morning -->
+
+<option value="wake">Get out of bed</option>
+<option value="morning">Morning routine</option>
+
+<!-- Cleaning -->
+
+<option value="room">Clean room</option>
+<option value="laundry">Laundry</option>
+<option value="dishes">Dishes</option>
+
+<!-- Creative -->
+
+<option value="music">Music work</option>
+<option value="art">Art practice</option>
+<option value="project">Project work</option>
+
+<!-- Lifestyle -->
+
+<option value="youtube">Limit YouTube</option>
+<option value="social">Limit scrolling</option>
+<option value="errands">Errands</option>
+
+<!-- Default -->
+
 <option value="general">General</option>
-<option value="cleaning">Cleaning</option>
-<option value="hygiene">Hygiene</option>
-<option value="fitness">Fitness</option>
-<option value="creative">Creative</option>
+
 </select>
 
 <button onclick="addTask()">Commit</button>
@@ -125,78 +160,27 @@ transition:.3s;"></div>
 <div id="lockScreen">
 <div id="lockBox">
 <h2 id="lockText"></h2>
-<button onclick="completeTask()">I finished it</button>
-<button onclick="startTask()">I’m doing it now</button>
-<button onclick="avoidTask()">I avoided it</button>
+
+<button onclick="respondCompleted()">I did it</button> <button onclick="respondPartial()">I started</button> <button onclick="respondAvoided()">I avoided it</button> <button onclick="respondOverwhelmed()">I was overwhelmed</button> <button onclick="respondReschedule()">Reschedule</button>
+
 </div>
 </div>
 
 <script>
 
-/* ---------- LOAD + CLEAN ---------- */
+/* ---------- LOAD ---------- */
 
 let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
 tasks = tasks.filter(t => t.duration);
 
-/* ---------- PACK ENGINE ---------- */
+/* ---------- PACK ENGINE BASE ---------- */
 
-const packs = {
+const packs = {}; // dialogue added later
 
-general:{
-avoidance:[
-"You said you’d do this.",
-"You’re avoiding it.",
-"You’re slipping."
-]
-},
-
-cleaning:{
-avoidance:[
-"You skipped cleaning.",
-"You live here — it matters.",
-"This keeps getting pushed."
-]
-},
-
-hygiene:{
-avoidance:[
-"You skipped hygiene.",
-"You deserve to feel clean.",
-"Routine matters."
-]
-},
-
-fitness:{
-avoidance:[
-"You avoided your workout.",
-"Your body needs consistency.",
-"You said you’d show up."
-]
-},
-
-creative:{
-avoidance:[
-"You avoided creative work.",
-"You can’t grow skills you don’t use.",
-"This matters to you."
-]
-}
-
-};
-
-/* ---------- DIALOGUE ROUTER ---------- */
+/* ---------- ROUTER ---------- */
 
 function getDialogue(task,event){
-
-let pack=packs[task.type]||packs.general;
-
-let lines=pack[event];
-
-if(!lines||lines.length===0)return "...";
-
-return lines[
-Math.min(task.escalation,lines.length-1)
-];
+return `[${task.type}] → ${event}`;
 }
 
 /* ---------- STATE ---------- */
@@ -233,8 +217,8 @@ type,
 start:now.getTime(),
 duration,
 done:false,
+response:null,
 escalation:0,
-avoids:0,
 lastPrompt:0,
 day:new Date().toDateString()
 });
@@ -268,8 +252,7 @@ t.title+
 end.toLocaleTimeString([],{
 hour:'2-digit',
 minute:'2-digit'
-})+
-(t.avoids>0?` (avoided ${t.avoids}x)`:"");
+});
 
 list.appendChild(div);
 
@@ -311,7 +294,7 @@ function triggerLock(task){
 
 activeTask=task;
 
-let line=getDialogue(task,"avoidance");
+let line=getDialogue(task,"missed");
 
 document.getElementById("lockText").innerText=
 line+"\n\n"+task.title;
@@ -319,41 +302,42 @@ line+"\n\n"+task.title;
 document.getElementById("lockScreen").style.display="flex";
 }
 
-/* ---------- ACTIONS ---------- */
+/* ---------- RESPONSES ---------- */
 
-function completeTask(){
+function respondCompleted(){
+activeTask.response="completed";
 activeTask.done=true;
-document.getElementById("lockScreen").style.display="none";
+closeLock();
 save();
 }
 
-function startTask(){
-document.getElementById("lockScreen").style.display="none";
-
-setTimeout(()=>{
-activeTask.escalation++;
-triggerLock(activeTask);
-},5*60000);
-}
-
-function avoidTask(){
-
-activeTask.avoids++;
-
-if(activeTask.avoids>=2){
-
-document.getElementById("lockText").innerText=
-"We’re not letting this slide.";
-
-return;
-}
-
-activeTask.start=Date.now()+15*60000;
-activeTask.lastPrompt=0;
-
-document.getElementById("lockScreen").style.display="none";
-
+function respondPartial(){
+activeTask.response="partial";
+closeLock();
 save();
+}
+
+function respondAvoided(){
+activeTask.response="avoided";
+closeLock();
+save();
+}
+
+function respondOverwhelmed(){
+activeTask.response="overwhelmed";
+closeLock();
+save();
+}
+
+function respondReschedule(){
+activeTask.response="rescheduled";
+activeTask.start=Date.now()+30*60000;
+closeLock();
+save();
+}
+
+function closeLock(){
+document.getElementById("lockScreen").style.display="none";
 }
 
 /* ---------- PROGRESS ---------- */
@@ -371,8 +355,8 @@ return;
 let score=0;
 
 todayTasks.forEach(t=>{
-if(t.done)score+=1;
-else if(t.avoids>=2)score-=1;
+if(t.response==="completed")score+=1;
+else if(t.response==="avoided")score-=1;
 });
 
 let percent=((score+todayTasks.length)/
@@ -393,4 +377,3 @@ updateDayBar();
 
 </body>
 </html>
-
