@@ -39,15 +39,17 @@
   }
 
   /* ---------- BASE UI ---------- */
+  *{box-sizing:border-box}
   body{
-    font-family:system-ui;
+    font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     background:var(--bg);
     margin:0;
     padding:1rem;
     color:var(--text);
+    transition: background .25s, color .25s;
   }
 
-  h1{text-align:center;margin-bottom:1rem;}
+  h1{text-align:center;margin:0 0 12px 0;font-size:1.6rem;}
 
   .panel{
     background:var(--panel-bg);
@@ -55,6 +57,7 @@
     border-radius:14px;
     margin-bottom:1rem;
     box-shadow:var(--card-shadow);
+    transition: background .25s, box-shadow .25s;
   }
 
   input,button,select,textarea{
@@ -62,7 +65,6 @@
     padding:.7rem;
     margin-top:.5rem;
     font-size:1rem;
-    box-sizing:border-box;
     color:var(--text);
     background:transparent;
     border:1px solid rgba(0,0,0,0.06);
@@ -74,7 +76,11 @@
     border-radius:10px;
     background:var(--primary);
     color:var(--primary-contrast);
+    padding:.7rem .9rem;
+    cursor:pointer;
   }
+
+  button.secondary{ background: transparent; color: var(--text); border:1px solid rgba(0,0,0,0.06) }
 
   .smallBtn{
     padding:.4rem .6rem;
@@ -137,48 +143,84 @@
     position:fixed;
     top:12px;
     right:12px;
-    width:44px;
-    height:44px;
+    width:46px;
+    height:46px;
     background:var(--gear-bg);
-    border-radius:50%;
+    border-radius:12px;
     display:flex;
     align-items:center;
     justify-content:center;
     font-size:20px;
-    box-shadow:0 4px 10px rgba(0,0,0,.12);
+    box-shadow:0 6px 18px rgba(0,0,0,.12);
     cursor:pointer;
     z-index:1100;
   }
 
-  /* Options panel */
+  /* Options panel (prettier) */
   #optionsPanel, #editPanel{
     display:none;
     position:fixed;
     inset:0;
-    background: rgba(0,0,0,0.5);
-    color:var(--primary-contrast);
+    background: rgba(0,0,0,0.45);
     z-index:1200;
     padding:2rem;
     box-sizing:border-box;
   }
 
   #optionsInner, #editInner{
-    max-width:520px;
+    max-width:720px;
     margin:0 auto;
     background:var(--panel-bg);
     color:var(--text);
-    padding:1rem;
-    border-radius:12px;
-    box-shadow:var(--card-shadow);
+    padding:18px;
+    border-radius:14px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.12);
+    display:grid;
+    grid-template-columns: 1fr 320px;
+    gap:18px;
+    align-items:start;
   }
 
-  #optionsInner h2, #editInner h2{margin-top:0;}
-  #testControls button{margin-top:.5rem;}
+  /* left column stacks */
+  .controlsColumn{padding-right:8px}
+  .controlCard{
+    background: rgba(255,255,255,0.02);
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:12px;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .controlHeader{font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .controlHint{font-size:.85rem;color:var(--muted);margin-top:6px}
 
-  /* Commitments label */
-  .subhead{font-size:0.9rem;color:var(--muted);margin-bottom:.5rem}
-  .muted{color:var(--muted);font-size:0.85rem}
+  /* preview column */
+  .previewColumn{
+    position:relative;
+  }
+  .closeX{
+    position:absolute;
+    top:-8px;
+    right:-8px;
+    background:var(--panel-bg);
+    color:var(--text);
+    border-radius:10px;
+    width:32px;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 6px 14px rgba(0,0,0,0.12);
+    cursor:pointer;
+  }
 
+  .previewBox{
+    border-radius:12px;
+    padding:14px;
+    background:linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.01));
+    border:1px solid rgba(0,0,0,0.04);
+  }
+
+  .muted{color:var(--muted);font-size:0.9rem}
   .actions {display:flex; gap:.5rem; align-items:center;}
   .actionBtn {background:#eee; color:#222; border-radius:8px; padding:.4rem .6rem; border:none; cursor:pointer;}
   .danger {background:#ff6b6b; color:white;}
@@ -186,9 +228,17 @@
 
   /* slider style */
   .sliderRow{display:flex;gap:.6rem;align-items:center;margin-top:.6rem;}
-  .valBox{min-width:48px;text-align:center;font-weight:600;background:transparent;border:0}
+  .valBox{min-width:56px;text-align:center;font-weight:600;background:transparent;border:0}
   input[type="range"]{width:100%;}
-  .sectionTitle{font-weight:600;margin-top:10px}
+  .sectionTitle{font-weight:700;margin-top:6px;font-size:0.95rem}
+  label.small{font-size:.9rem;color:var(--muted);display:block;margin-bottom:6px}
+  .radioRow{display:flex;gap:.6rem;align-items:center;margin-top:8px}
+  .swatchMini{width:32px;height:20px;border-radius:6px;border:1px solid rgba(0,0,0,0.06);}
+
+  @media (max-width:880px){
+    #optionsInner{ grid-template-columns: 1fr; }
+    .previewColumn{ order: -1; }
+  }
 </style>
 </head>
 
@@ -201,7 +251,7 @@
 
 <!-- Progress -->
 <div class="panel">
-  <h3>Today</h3>
+  <h3 style="margin:0 0 8px 0">Today</h3>
   <div style="width:100%;height:18px;background:#ddd;border-radius:10px;overflow:hidden;">
     <div id="dayBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent1),var(--accent2));transition:.3s;"></div>
   </div>
@@ -214,7 +264,6 @@
   <input id="taskDuration" type="number" placeholder="Duration (minutes)">
 
   <select id="taskType">
-    <!-- options omitted for brevity; same as before -->
     <option value="shower">Shower</option>
     <option value="facecare">Face routine</option>
     <option value="teeth">Brush teeth</option>
@@ -297,7 +346,6 @@
     <input id="editDuration" type="number" placeholder="Duration (minutes)">
 
     <select id="editType">
-      <!-- same options as above -->
       <option value="shower">Shower</option>
       <option value="facecare">Face routine</option>
       <option value="teeth">Brush teeth</option>
@@ -342,78 +390,117 @@
 <!-- OPTIONS PANEL (hidden by default) -->
 <div id="optionsPanel">
   <div id="optionsInner">
-    <h2>Options</h2>
+    <!-- LEFT: controls -->
+    <div class="controlsColumn">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-weight:800;font-size:1.05rem">Options</div>
+        <div style="font-size:.9rem;color:var(--muted)">Customize appearance</div>
+      </div>
 
-    <label style="display:block;margin-bottom:.6rem;">
-      <input type="checkbox" id="testToggle"> Enable Test Mode
-    </label>
+      <div class="controlCard">
+        <div class="controlHeader">Appearance <span style="font-size:.85rem;color:var(--muted)">· colors & contrast</span></div>
+        <div class="controlGroup">
+          <label class="small">Text color</label>
+          <div class="radioRow" style="align-items:center">
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+              <input type="radio" name="textColor" id="textBlack" value="black">
+              <div class="swatchMini" style="background:#111;border:1px solid rgba(0,0,0,.15)"></div>
+              <div>Black</div>
+            </label>
 
-    <div id="testControls" style="display:none;">
-      <div style="margin-bottom:.4rem;color:var(--muted);">Test controls (sandbox - no changes to real tasks)</div>
-      <button onclick="devTrigger()">Trigger test lock</button>
-      <button onclick="devEscalate()">Escalate test lock</button>
-      <button onclick="devReset()">Reset test escalation</button>
+            <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+              <input type="radio" name="textColor" id="textWhite" value="white">
+              <div class="swatchMini" style="background:#fff;border:1px solid rgba(0,0,0,.06)"></div>
+              <div>White</div>
+            </label>
+          </div>
+          <div class="controlHint">Pick the main text color (useful for high-contrast needs).</div>
+        </div>
+      </div>
+
+      <div class="controlCard">
+        <div class="controlHeader">Background</div>
+
+        <label class="small">Hue</label>
+        <div class="sliderRow">
+          <input type="range" id="bgHue" min="0" max="360" value="30">
+          <div class="valBox" id="bgHueVal">30</div>
+        </div>
+
+        <label class="small">Saturation</label>
+        <div class="sliderRow">
+          <input type="range" id="bgSat" min="0" max="100" value="24">
+          <div class="valBox" id="bgSatVal">24%</div>
+        </div>
+
+        <label class="small">Lightness</label>
+        <div class="sliderRow">
+          <input type="range" id="bgLight" min="0" max="100" value="95">
+          <div class="valBox" id="bgLightVal">95%</div>
+        </div>
+      </div>
+
+      <div class="controlCard">
+        <div class="controlHeader">Panel</div>
+        <label class="small">Panel lightness</label>
+        <div class="sliderRow">
+          <input type="range" id="panelLight" min="0" max="100" value="100">
+          <div class="valBox" id="panelLightVal">100%</div>
+        </div>
+      </div>
+
+      <div class="controlCard">
+        <div class="controlHeader">Accent</div>
+        <label class="small">Hue</label>
+        <div class="sliderRow">
+          <input type="range" id="accentHue" min="0" max="360" value="145">
+          <div class="valBox" id="accentHueVal">145</div>
+        </div>
+
+        <label class="small">Saturation</label>
+        <div class="sliderRow">
+          <input type="range" id="accentSat" min="0" max="100" value="80">
+          <div class="valBox" id="accentSatVal">80%</div>
+        </div>
+
+        <label class="small">Lightness</label>
+        <div class="sliderRow">
+          <input type="range" id="accentLight" min="0" max="100" value="52">
+          <div class="valBox" id="accentLightVal">52%</div>
+        </div>
+
+        <div style="margin-top:10px; display:flex; gap:.6rem; align-items:center;">
+          <button class="smallBtn" id="resetCustom">Reset to defaults</button>
+          <div style="font-size:.85rem;color:var(--muted);">Changes save automatically.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.6rem;margin-top:10px;align-items:center">
+        <button onclick="toggleOptions()">Close</button>
+        <button class="secondary" onclick="exportSettings()">Export</button>
+        <button class="secondary" onclick="importSettingsPrompt()">Import</button>
+      </div>
     </div>
 
-    <hr style="margin:10px 0;border:none;border-top:1px solid rgba(0,0,0,0.06)">
+    <!-- RIGHT: preview / quick info -->
+    <div class="previewColumn">
+      <div class="closeX" title="Close" onclick="toggleOptions()">✕</div>
+      <div class="previewBox">
+        <div style="font-weight:800;margin-bottom:8px">Preview</div>
+        <div style="font-size:.95rem;margin-bottom:8px">Live preview of your color choices:</div>
+        <div style="background:var(--panel-bg);padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.04)">
+          <div style="font-weight:700">• Task title</div>
+          <div class="taskMeta" style="margin-bottom:8px">10:00 — ends 10:15</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="small">exercise</div>
+            <div style="margin-left:auto;color:var(--muted)">Status: pending</div>
+          </div>
+        </div>
 
-    <div>
-      <div class="sectionTitle">Background</div>
-
-      <div class="sliderRow" style="margin-top:8px;">
-        <label style="min-width:90px">Hue</label>
-        <input type="range" id="bgHue" min="0" max="360" value="30">
-        <div class="valBox" id="bgHueVal">30</div>
+        <div style="margin-top:12px;" class="muted">
+          Tip: use the accent sliders to pick your main app color. If text gets hard to read, toggle Text color to white or black.
+        </div>
       </div>
-
-      <div class="sliderRow">
-        <label style="min-width:90px">Saturation</label>
-        <input type="range" id="bgSat" min="0" max="100" value="24">
-        <div class="valBox" id="bgSatVal">24%</div>
-      </div>
-
-      <div class="sliderRow">
-        <label style="min-width:90px">Lightness</label>
-        <input type="range" id="bgLight" min="0" max="100" value="95">
-        <div class="valBox" id="bgLightVal">95%</div>
-      </div>
-
-      <div class="sectionTitle">Panel</div>
-      <div class="sliderRow" style="margin-top:8px;">
-        <label style="min-width:90px">Panel L</label>
-        <input type="range" id="panelLight" min="0" max="100" value="100">
-        <div class="valBox" id="panelLightVal">100%</div>
-      </div>
-
-      <div class="sectionTitle">Accent</div>
-
-      <div class="sliderRow" style="margin-top:8px;">
-        <label style="min-width:90px">Hue</label>
-        <input type="range" id="accentHue" min="0" max="360" value="145">
-        <div class="valBox" id="accentHueVal">145</div>
-      </div>
-
-      <div class="sliderRow">
-        <label style="min-width:90px">Saturation</label>
-        <input type="range" id="accentSat" min="0" max="100" value="80">
-        <div class="valBox" id="accentSatVal">80%</div>
-      </div>
-
-      <div class="sliderRow">
-        <label style="min-width:90px">Lightness</label>
-        <input type="range" id="accentLight" min="0" max="100" value="52">
-        <div class="valBox" id="accentLightVal">52%</div>
-      </div>
-
-      <div style="margin-top:10px; display:flex; gap:.6rem; align-items:center;">
-        <button class="smallBtn" id="resetCustom">Reset to defaults</button>
-        <div style="font-size:.85rem;color:var(--muted);">Changes save automatically.</div>
-      </div>
-
-    </div>
-
-    <div style="margin-top:1rem;">
-      <button onclick="toggleOptions()">Close</button>
     </div>
   </div>
 </div>
@@ -477,22 +564,41 @@ function wireDayGrid(gridRootSelector){
 wireDayGrid("#dayGrid");
 wireDayGrid("#editDayGrid");
 
-/* ---------- CUSTOMIZATION (sliders) ---------- */
+/* ---------- CUSTOMIZATION (sliders + text color) ---------- */
 
 const STORAGE_PREFIX = "showup_custom_";
 const defaults = {
-  bgHue: 30,    // warm off-white
+  bgHue: 30,
   bgSat: 24,
   bgLight: 95,
   panelLight: 100,
   accentHue: 145,
   accentSat: 80,
-  accentLight: 52
+  accentLight: 52,
+  textColor: 'black'
 };
 
 function savedOrDefault(key){
   const val = localStorage.getItem(STORAGE_PREFIX + key);
-  return val === null ? defaults[key] : Number(val);
+  return val === null ? defaults[key] : (isNaN(val) ? val : Number(val));
+}
+
+function applyTextColor(value){
+  if(!value) value = savedOrDefault('textColor');
+  if(value === 'white'){
+    document.documentElement.style.setProperty('--text', '#ffffff');
+    document.documentElement.style.setProperty('--muted', 'rgba(255,255,255,0.75)');
+  } else {
+    document.documentElement.style.setProperty('--text', '#222222');
+    document.documentElement.style.setProperty('--muted', '#666666');
+  }
+  // persist
+  try{ localStorage.setItem(STORAGE_PREFIX + 'textColor', value); }catch(e){}
+  // sync radios
+  const b = document.getElementById('textBlack');
+  const w = document.getElementById('textWhite');
+  if(b) b.checked = (value !== 'white');
+  if(w) w.checked = (value === 'white');
 }
 
 function applyCustomStylesFromStorage(){
@@ -557,26 +663,78 @@ function saveCustom(key, value){
     const label = document.getElementById(id + 'Val');
     if(label){
       label.innerText = id.toLowerCase().includes('hue') ? String(v) : (String(v) + (id.toLowerCase().includes('hue') ? '' : '%'));
-      if(id.endsWith('Hue')) label.innerText = String(v);
     }
     saveCustom(id, v);
   });
 });
 
+// text color radios
+const rb = document.getElementById('textBlack');
+const rw = document.getElementById('textWhite');
+if(rb) rb.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor('black'); });
+if(rw) rw.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor('white'); });
+
 // reset button
 const resetBtn = document.getElementById('resetCustom');
 if(resetBtn){
   resetBtn.addEventListener('click', ()=>{
-    // clear storage keys and reapply defaults
-    ['bgHue','bgSat','bgLight','panelLight','accentHue','accentSat','accentLight'].forEach(k=>{
+    ['bgHue','bgSat','bgLight','panelLight','accentHue','accentSat','accentLight','textColor'].forEach(k=>{
       localStorage.removeItem(STORAGE_PREFIX + k);
     });
     applyCustomStylesFromStorage();
+    applyTextColor(defaults.textColor);
   });
 }
 
-// run apply on load
+// export / import helpers
+function exportSettings(){
+  const keys = ['bgHue','bgSat','bgLight','panelLight','accentHue','accentSat','accentLight','textColor'];
+  const out = {};
+  keys.forEach(k=>{
+    const v = localStorage.getItem(STORAGE_PREFIX + k);
+    if(v !== null) out[k] = v;
+  });
+  const data = JSON.stringify(out, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'showup-colors.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importSettingsPrompt(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json';
+  input.onchange = (ev) => {
+    const f = ev.target.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const obj = JSON.parse(reader.result);
+        Object.keys(obj).forEach(k=>{
+          localStorage.setItem(STORAGE_PREFIX + k, String(obj[k]));
+        });
+        applyCustomStylesFromStorage();
+        applyTextColor(localStorage.getItem(STORAGE_PREFIX + 'textColor') || defaults.textColor);
+        alert('Imported settings.');
+      }catch(err){
+        alert('Invalid file.');
+      }
+    };
+    reader.readAsText(f);
+  };
+  input.click();
+}
+
+/* ---------- apply on load ---------- */
 applyCustomStylesFromStorage();
+applyTextColor(localStorage.getItem(STORAGE_PREFIX + 'textColor') || defaults.textColor);
 
 /* ---------- SAVE / RENDER / HELPERS (task UI) ---------- */
 
