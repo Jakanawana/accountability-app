@@ -5,7 +5,6 @@
 <meta charset="UTF-8">
 <title>Show Up</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="manifest" href="manifest.json">
 
 <style>
 body{
@@ -26,7 +25,7 @@ margin-bottom:1rem;
 box-shadow:0 4px 10px rgba(0,0,0,.05);
 }
 
-input,button,select{
+input,button{
 width:100%;
 padding:.7rem;
 margin-top:.5rem;
@@ -40,21 +39,27 @@ background:#6b7b6b;
 color:white;
 }
 
-#gearButton{
-position:fixed;
-top:12px;
-right:12px;
-width:44px;
-height:44px;
-background:white;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:20px;
-box-shadow:0 4px 10px rgba(0,0,0,.15);
+/* Weekday selector */
+
+.dayGrid{
+display:grid;
+grid-template-columns:repeat(7,1fr);
+gap:.3rem;
+margin-top:.5rem;
+}
+
+.dayBtn{
+background:#ddd;
+color:#222;
+padding:.5rem;
+border-radius:8px;
 cursor:pointer;
-z-index:1000;
+font-size:.8rem;
+}
+
+.dayBtn.active{
+background:#6b7b6b;
+color:white;
 }
 
 #lockScreen{
@@ -69,62 +74,33 @@ text-align:center;
 padding:2rem;
 z-index:999;
 }
-
-#lockBox{max-width:320px;}
-#lockBox button{margin-top:.6rem;}
 </style>
 
 </head>
 
 <body>
 
-<div id="gearButton">⚙️</div>
-
 <h1>Show up.</h1>
-
-<!-- Progress -->
-
-<div class="panel">
-<h3>Today</h3>
-<div style="width:100%;height:18px;background:#ddd;border-radius:10px;overflow:hidden;">
-<div id="dayBar" style="
-height:100%;
-width:0%;
-background:linear-gradient(90deg,#4caf50,#ff5252);
-transition:.3s;"></div>
-</div>
-</div>
 
 <!-- Task Input -->
 
 <div class="panel">
 
-<input id="taskTitle" placeholder="What are you supposed to do?">
+<input id="taskTitle" placeholder="Task">
 <input id="taskTime" type="time">
-<input id="taskDuration" type="number" placeholder="Duration (minutes)">
+<input id="taskDuration" type="number" placeholder="Minutes">
 
-<select id="taskType">
-<option value="wake">Wake up</option>
-<option value="shower">Shower</option>
-<option value="exercise">Exercise</option>
-<option value="music">Music work</option>
-<option value="project">Project work</option>
-<option value="youtube">Limit YouTube</option>
-<option value="general">General</option>
-</select>
+<!-- Weekday Selector -->
 
-<select id="taskRepeat">
-<option value="none">One time</option>
-<option value="daily">Daily</option>
-<option value="weekdays">Weekdays</option>
-<option value="weekends">Weekends</option>
-<option value="interval">Every X days</option>
-</select>
-
-<input id="repeatInterval"
-type="number"
-placeholder="X days"
-style="display:none;">
+<div class="dayGrid" id="dayGrid">
+<div class="dayBtn" data-day="0">Sun</div>
+<div class="dayBtn" data-day="1">Mon</div>
+<div class="dayBtn" data-day="2">Tue</div>
+<div class="dayBtn" data-day="3">Wed</div>
+<div class="dayBtn" data-day="4">Thu</div>
+<div class="dayBtn" data-day="5">Fri</div>
+<div class="dayBtn" data-day="6">Sat</div>
+</div>
 
 <button onclick="addTask()">Commit</button>
 
@@ -132,61 +108,68 @@ style="display:none;">
 
 <!-- Task List -->
 
-<div class="panel" id="taskList">
-<p>No commitments yet.</p>
-</div>
+<div class="panel" id="taskList"></div>
 
-<!-- Lock Screen -->
+<!-- Lock -->
 
 <div id="lockScreen">
-<div id="lockBox">
 <h2 id="lockText"></h2>
-
-<button onclick="respondCompleted()">I did it</button> <button onclick="respondPartial()">I started</button> <button onclick="respondAvoided()">I avoided it</button> <button onclick="respondOverwhelmed()">I was overwhelmed</button> <button onclick="respondReschedule()">Reschedule</button>
-
-</div>
+<button onclick="completeTask()">Done</button>
 </div>
 
 <script>
 
-/* ---------- LOAD ---------- */
-
-let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-tasks = tasks.filter(t => t.duration);
-
-/* ---------- REPEAT UI ---------- */
-
-document.getElementById("taskRepeat")
-.addEventListener("change",e=>{
-document.getElementById("repeatInterval")
-.style.display=
-e.target.value==="interval"?"block":"none";
-});
-
 /* ---------- STATE ---------- */
 
+let tasks =
+JSON.parse(localStorage.getItem("tasks")||"[]");
+
 let activeTask=null;
+
+/* ---------- DAY SELECTOR ---------- */
+
+document
+.querySelectorAll(".dayBtn")
+.forEach(btn=>{
+
+btn.addEventListener("click",()=>{
+
+btn.classList.toggle("active");
+
+});
+
+});
 
 /* ---------- SAVE ---------- */
 
 function save(){
-localStorage.setItem("tasks", JSON.stringify(tasks));
+
+localStorage.setItem(
+"tasks",
+JSON.stringify(tasks)
+);
+
 render();
-updateDayBar();
+
 }
 
-/* ---------- ADD TASK ---------- */
+/* ---------- ADD ---------- */
 
 function addTask(){
 
-let title=document.getElementById("taskTitle").value;
-let time=document.getElementById("taskTime").value;
-let duration=parseInt(document.getElementById("taskDuration").value);
-let type=document.getElementById("taskType").value;
-let repeat=document.getElementById("taskRepeat").value;
-let interval=parseInt(
-document.getElementById("repeatInterval").value
-)||null;
+let title=
+document.getElementById("taskTitle").value;
+
+let time=
+document.getElementById("taskTime").value;
+
+let duration=parseInt(
+document.getElementById("taskDuration").value
+);
+
+let days=[...document
+.querySelectorAll(".dayBtn.active")]
+.map(b=>parseInt(b.dataset.day));
 
 if(!title||!time||!duration)return;
 
@@ -195,130 +178,87 @@ let [h,m]=time.split(":");
 now.setHours(h,m,0,0);
 
 tasks.push({
+
 id:Date.now(),
 title,
-type,
 start:now.getTime(),
 duration,
-repeat,
-repeatInterval:interval,
+days,
 template:true,
-done:false,
-response:null,
-escalation:0,
-lastPrompt:0,
-day:new Date().toDateString()
+done:false
+
 });
 
 save();
+
+}
+
+/* ---------- SPAWN ---------- */
+
+function spawn(){
+
+let today=new Date().getDay();
+
+tasks
+.filter(t=>t.template)
+.forEach(t=>{
+
+if(!t.days.includes(today))return;
+
+let exists=tasks.some(x=>
+!x.template &&
+x.title===t.title &&
+new Date(x.start)
+.toDateString()===
+new Date().toDateString()
+);
+
+if(!exists){
+
+tasks.push({
+
+...t,
+id:Date.now(),
+template:false,
+start:new Date().getTime(),
+done:false
+
+});
+
+}
+
+});
+
+save();
+
 }
 
 /* ---------- RENDER ---------- */
 
 function render(){
 
-let list=document.getElementById("taskList");
+let list=
+document.getElementById("taskList");
+
 list.innerHTML="";
 
-let active=tasks.filter(t=>!t.done && !t.template);
-
-if(active.length===0){
-list.innerHTML="<p>No commitments yet.</p>";
-return;
-}
-
-active.forEach(t=>{
-
-let end=new Date(t.start+(t.duration*60000));
+tasks
+.filter(t=>!t.template && !t.done)
+.forEach(t=>{
 
 let div=document.createElement("div");
-div.textContent=
-`[${t.type}] `+
-t.title+
-" — ends "+
-end.toLocaleTimeString([],{
-hour:'2-digit',
-minute:'2-digit'
-});
+
+div.textContent=t.title;
 
 list.appendChild(div);
 
 });
-}
 
-/* ---------- SPAWN RECURRING ---------- */
-
-function spawnRecurring(){
-
-let now=new Date();
-
-tasks
-.filter(t=>t.template)
-.forEach(t=>{
-
-let shouldSpawn=false;
-
-let day=now.getDay();
-
-if(t.repeat==="daily")shouldSpawn=true;
-
-if(t.repeat==="weekdays" && day>0 && day<6)
-shouldSpawn=true;
-
-if(t.repeat==="weekends" && (day===0||day===6))
-shouldSpawn=true;
-
-if(t.repeat==="interval" && t.repeatInterval){
-
-let last=new Date(t.start);
-let diff=Math.floor(
-(now-last)/(1000*60*60*24)
-);
-
-if(diff>=t.repeatInterval)
-shouldSpawn=true;
-}
-
-if(shouldSpawn){
-
-let exists=tasks.some(x=>
-!x.template &&
-x.title===t.title &&
-new Date(x.day).toDateString()===
-now.toDateString()
-);
-
-if(!exists){
-
-tasks.push({
-...t,
-id:Date.now(),
-template:false,
-start:new Date(
-now.setHours(
-new Date(t.start).getHours(),
-new Date(t.start).getMinutes(),
-0,0
-)
-).getTime(),
-done:false,
-response:null,
-escalation:0,
-lastPrompt:0,
-day:new Date().toDateString()
-});
-
-}
-}
-
-});
-
-save();
 }
 
 /* ---------- CHECK ---------- */
 
-function checkTasks(){
+function check(){
 
 let now=Date.now();
 
@@ -326,97 +266,47 @@ tasks.forEach(t=>{
 
 if(t.done||t.template)return;
 
-let endTime=t.start+(t.duration*60000);
+let end=t.start+(t.duration*60000);
 
-if(now>endTime){
+if(now>end){
 
 activeTask=t;
 
-document.getElementById("lockText").innerText=
-`[${t.type}] missed\n\n${t.title}`;
+document.getElementById(
+"lockText"
+).innerText=t.title;
 
-document.getElementById("lockScreen").style.display="flex";
+document.getElementById(
+"lockScreen"
+).style.display="flex";
 
 }
 
 });
+
 }
 
-/* ---------- RESPONSES ---------- */
+/* ---------- COMPLETE ---------- */
 
-function respondCompleted(){
+function completeTask(){
+
 activeTask.done=true;
-activeTask.response="completed";
-closeLock();
+
+document.getElementById(
+"lockScreen"
+).style.display="none";
+
 save();
-}
 
-function respondPartial(){
-activeTask.response="partial";
-closeLock();
-save();
-}
-
-function respondAvoided(){
-activeTask.response="avoided";
-closeLock();
-save();
-}
-
-function respondOverwhelmed(){
-activeTask.response="overwhelmed";
-closeLock();
-save();
-}
-
-function respondReschedule(){
-activeTask.response="rescheduled";
-activeTask.start=Date.now()+30*60000;
-closeLock();
-save();
-}
-
-function closeLock(){
-document.getElementById("lockScreen").style.display="none";
-}
-
-/* ---------- PROGRESS ---------- */
-
-function updateDayBar(){
-
-let today=new Date().toDateString();
-
-let todayTasks=tasks.filter(t=>
-t.day===today && !t.template
-);
-
-if(todayTasks.length===0){
-document.getElementById("dayBar").style.width="0%";
-return;
-}
-
-let score=0;
-
-todayTasks.forEach(t=>{
-if(t.response==="completed")score+=1;
-else if(t.response==="avoided")score-=1;
-});
-
-let percent=((score+todayTasks.length)/
-(2*todayTasks.length))*100;
-
-document.getElementById("dayBar").style.width=
-Math.max(0,percent)+"%";
 }
 
 /* ---------- START ---------- */
 
-spawnRecurring();
-setInterval(checkTasks,60000);
-setInterval(spawnRecurring,3600000);
+spawn();
+setInterval(spawn,3600000);
+setInterval(check,60000);
 
 render();
-updateDayBar();
 
 </script>
 
