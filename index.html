@@ -321,12 +321,20 @@
   </div>
 </div>
 
-<!-- Lock Screen -->
-<div id="lockScreen">
-  <div id="lockBox">
-    <h2 id="lockText"></h2>
+<!-- Lock Screen (conversation UI) -->
+<div id="lockScreen" aria-hidden="true">
+  <div id="lockBox" role="dialog" aria-modal="true" aria-label="Task dialog">
+    <!-- conversation area -->
+    <div id="dialogueWrap" style="text-align:left;">
+      <div id="dialogueLines" style="max-height:260px; overflow:auto; padding:6px; border-radius:10px; background:rgba(255,255,255,0.03); margin-bottom:12px;">
+        <!-- message bubbles injected here -->
+      </div>
 
-    <div id="lockButtons" style="margin-top:1rem;">
+      <div id="dialogTaskMeta" class="taskMeta" style="margin-bottom:8px; text-align:center; font-weight:700;"></div>
+    </div>
+
+    <!-- response buttons (also clickable bubbles via JS) -->
+    <div id="lockButtons" style="margin-top:1rem; display:grid; gap:8px;">
       <button onclick="respondCompleted()">I did it</button>
       <button onclick="respondPartial()">I started</button>
       <button onclick="respondAvoided()">I avoided it</button>
@@ -339,6 +347,7 @@
     </div>
   </div>
 </div>
+
 
 <!-- EDIT PANEL (for templates) -->
 <div id="editPanel">
@@ -1135,3 +1144,4 @@ updateDayBar();
 
 </body>
 </html>
+
