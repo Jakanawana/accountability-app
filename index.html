@@ -82,7 +82,7 @@ z-index:999;
 
 <h1>Show up.</h1>
 
-<!-- Progress Bar -->
+<!-- Progress -->
 
 <div class="panel">
 <h3>Today</h3>
@@ -98,52 +98,33 @@ transition:.3s;"></div>
 <!-- Task Input -->
 
 <div class="panel">
+
 <input id="taskTitle" placeholder="What are you supposed to do?">
 <input id="taskTime" type="time">
 <input id="taskDuration" type="number" placeholder="Duration (minutes)">
 
 <select id="taskType">
-
-<!-- Hygiene -->
-
+<option value="wake">Wake up</option>
 <option value="shower">Shower</option>
-<option value="facecare">Face routine</option>
-<option value="teeth">Brush teeth</option>
-
-<!-- Body -->
-
 <option value="exercise">Exercise</option>
-<option value="stretch">Stretch</option>
-<option value="sleep">Sleep routine</option>
-
-<!-- Morning -->
-
-<option value="wake">Get out of bed</option>
-<option value="morning">Morning routine</option>
-
-<!-- Cleaning -->
-
-<option value="room">Clean room</option>
-<option value="laundry">Laundry</option>
-<option value="dishes">Dishes</option>
-
-<!-- Creative -->
-
 <option value="music">Music work</option>
-<option value="art">Art practice</option>
 <option value="project">Project work</option>
-
-<!-- Lifestyle -->
-
 <option value="youtube">Limit YouTube</option>
-<option value="social">Limit scrolling</option>
-<option value="errands">Errands</option>
-
-<!-- Default -->
-
 <option value="general">General</option>
-
 </select>
+
+<select id="taskRepeat">
+<option value="none">One time</option>
+<option value="daily">Daily</option>
+<option value="weekdays">Weekdays</option>
+<option value="weekends">Weekends</option>
+<option value="interval">Every X days</option>
+</select>
+
+<input id="repeatInterval"
+type="number"
+placeholder="X days"
+style="display:none;">
 
 <button onclick="addTask()">Commit</button>
 
@@ -173,15 +154,14 @@ transition:.3s;"></div>
 let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
 tasks = tasks.filter(t => t.duration);
 
-/* ---------- PACK ENGINE BASE ---------- */
+/* ---------- REPEAT UI ---------- */
 
-const packs = {}; // dialogue added later
-
-/* ---------- ROUTER ---------- */
-
-function getDialogue(task,event){
-return `[${task.type}] → ${event}`;
-}
+document.getElementById("taskRepeat")
+.addEventListener("change",e=>{
+document.getElementById("repeatInterval")
+.style.display=
+e.target.value==="interval"?"block":"none";
+});
 
 /* ---------- STATE ---------- */
 
@@ -203,6 +183,10 @@ let title=document.getElementById("taskTitle").value;
 let time=document.getElementById("taskTime").value;
 let duration=parseInt(document.getElementById("taskDuration").value);
 let type=document.getElementById("taskType").value;
+let repeat=document.getElementById("taskRepeat").value;
+let interval=parseInt(
+document.getElementById("repeatInterval").value
+)||null;
 
 if(!title||!time||!duration)return;
 
@@ -216,6 +200,9 @@ title,
 type,
 start:now.getTime(),
 duration,
+repeat,
+repeatInterval:interval,
+template:true,
 done:false,
 response:null,
 escalation:0,
@@ -233,14 +220,14 @@ function render(){
 let list=document.getElementById("taskList");
 list.innerHTML="";
 
-if(tasks.length===0){
+let active=tasks.filter(t=>!t.done && !t.template);
+
+if(active.length===0){
 list.innerHTML="<p>No commitments yet.</p>";
 return;
 }
 
-tasks.forEach(t=>{
-
-if(t.done)return;
+active.forEach(t=>{
 
 let end=new Date(t.start+(t.duration*60000));
 
@@ -259,6 +246,76 @@ list.appendChild(div);
 });
 }
 
+/* ---------- SPAWN RECURRING ---------- */
+
+function spawnRecurring(){
+
+let now=new Date();
+
+tasks
+.filter(t=>t.template)
+.forEach(t=>{
+
+let shouldSpawn=false;
+
+let day=now.getDay();
+
+if(t.repeat==="daily")shouldSpawn=true;
+
+if(t.repeat==="weekdays" && day>0 && day<6)
+shouldSpawn=true;
+
+if(t.repeat==="weekends" && (day===0||day===6))
+shouldSpawn=true;
+
+if(t.repeat==="interval" && t.repeatInterval){
+
+let last=new Date(t.start);
+let diff=Math.floor(
+(now-last)/(1000*60*60*24)
+);
+
+if(diff>=t.repeatInterval)
+shouldSpawn=true;
+}
+
+if(shouldSpawn){
+
+let exists=tasks.some(x=>
+!x.template &&
+x.title===t.title &&
+new Date(x.day).toDateString()===
+now.toDateString()
+);
+
+if(!exists){
+
+tasks.push({
+...t,
+id:Date.now(),
+template:false,
+start:new Date(
+now.setHours(
+new Date(t.start).getHours(),
+new Date(t.start).getMinutes(),
+0,0
+)
+).getTime(),
+done:false,
+response:null,
+escalation:0,
+lastPrompt:0,
+day:new Date().toDateString()
+});
+
+}
+}
+
+});
+
+save();
+}
+
 /* ---------- CHECK ---------- */
 
 function checkTasks(){
@@ -267,46 +324,29 @@ let now=Date.now();
 
 tasks.forEach(t=>{
 
-if(t.done)return;
+if(t.done||t.template)return;
 
 let endTime=t.start+(t.duration*60000);
 
 if(now>endTime){
 
-if(!t.lastPrompt){
-t.lastPrompt=now;
-triggerLock(t);
-}
-
-else if(now - t.lastPrompt > 10*60000){
-t.escalation++;
-t.lastPrompt=now;
-triggerLock(t);
-}
-
-}
-});
-}
-
-/* ---------- LOCK ---------- */
-
-function triggerLock(task){
-
-activeTask=task;
-
-let line=getDialogue(task,"missed");
+activeTask=t;
 
 document.getElementById("lockText").innerText=
-line+"\n\n"+task.title;
+`[${t.type}] missed\n\n${t.title}`;
 
 document.getElementById("lockScreen").style.display="flex";
+
+}
+
+});
 }
 
 /* ---------- RESPONSES ---------- */
 
 function respondCompleted(){
-activeTask.response="completed";
 activeTask.done=true;
+activeTask.response="completed";
 closeLock();
 save();
 }
@@ -345,7 +385,10 @@ document.getElementById("lockScreen").style.display="none";
 function updateDayBar(){
 
 let today=new Date().toDateString();
-let todayTasks=tasks.filter(t=>t.day===today);
+
+let todayTasks=tasks.filter(t=>
+t.day===today && !t.template
+);
 
 if(todayTasks.length===0){
 document.getElementById("dayBar").style.width="0%";
@@ -368,7 +411,9 @@ Math.max(0,percent)+"%";
 
 /* ---------- START ---------- */
 
+spawnRecurring();
 setInterval(checkTasks,60000);
+setInterval(spawnRecurring,3600000);
 
 render();
 updateDayBar();
