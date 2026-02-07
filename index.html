@@ -550,24 +550,209 @@ localStorage.setItem("tasks", JSON.stringify(tasks));
 
 /* ---------- PACK ENGINE (placeholder content) ---------- */
 
-const packs = {
-  general: { avoidance: ["You said you’d do this.", "You’re avoiding it."], interrogation: ["What happened?"], care: ["You okay?"] },
-  shower: { avoidance: ["You skipped showering."], interrogation: ["Did you feel too tired or just avoiding it?" ], care: ["You deserve to feel clean — you okay?"] },
-  facecare: { avoidance: ["You skipped face routine."], interrogation: ["What stopped you?" ], care: ["Skin care helps mood—did something come up?"] },
-  wake: { avoidance: ["You didn't get up."], interrogation: ["What happened with sleep?"], care: ["You rested enough?"] },
-  exercise: { avoidance: ["You avoided your workout."], interrogation: ["Was it motivation or fatigue?" ], care: ["Body check — are you sore?"] },
-  music: { avoidance: ["You avoided music work."], interrogation: ["Which part blocked you?" ], care: ["Creative blocks happen — you okay?"] },
-  youtube: { avoidance: ["You watched videos instead."], interrogation: ["How many minutes?" ], care: ["Short break okay — but did you want to do the task?"] },
+/* ---------- CHARACTER DIALOGUE ENGINE ---------- */
+
+const dialogue = {
+
+  /* ========== GENERAL FALLBACK ========== */
+
+  general: {
+
+    completed: [
+      "You did it. I’m impressed.",
+      "Task done. Good.",
+      "You followed through — proud of you."
+    ],
+
+    partial: [
+      "You started. That counts… barely.",
+      "Half effort is still effort.",
+      "You touched the task. Growth."
+    ],
+
+    avoided: [
+      "You avoided it.",
+      "You said you would — you didn’t.",
+      "Avoidance again. Pattern forming."
+    ]
+  },
+
+  /* ========== WAKE UP ========== */
+
+  wake: {
+
+    completed: [
+      "Oh? Up on time.",
+      "You beat the bed. Proud.",
+      "Good boy. Morning win."
+    ],
+
+    partial: [
+      "Eventually conscious.",
+      "Late — but alive.",
+      "You crawled out. Counts."
+    ],
+
+    avoided: [
+      "You lost to your bed.",
+      "Alarm rang. You ignored it.",
+      "Sleep won again."
+    ]
+  },
+
+  /* ========== SHOWER ========== */
+
+  shower: {
+
+    completed: [
+      "Clean. Civilised. Stunning.",
+      "You smell less like depression nest.",
+      "Proud of you for basic hygiene."
+    ],
+
+    partial: [
+      "Half shower?",
+      "Speedrun hygiene I see.",
+      "You rinsed. Bare minimum."
+    ],
+
+    avoided: [
+      "Skipped showering.",
+      "Avoiding hygiene now?",
+      "You just didn’t wash."
+    ]
+  },
+
+  /* ========== FACECARE ========== */
+
+  facecare: {
+
+    completed: [
+      "Skin routine done. Glow up era.",
+      "Taking care of your face — love that.",
+      "Cute and moisturised."
+    ],
+
+    partial: [
+      "Half routine.",
+      "You tried. I guess.",
+      "Better than nothing."
+    ],
+
+    avoided: [
+      "Skipped face care.",
+      "You forgot again?",
+      "Your skin is judging you."
+    ]
+  },
+
+  /* ========== EXERCISE ========== */
+
+  exercise: {
+
+    completed: [
+      "Worked out. Hot.",
+      "Body maintenance complete.",
+      "Proud of you, Jak."
+    ],
+
+    partial: [
+      "Half workout.",
+      "You started at least.",
+      "Baby steps."
+    ],
+
+    avoided: [
+      "You dodged exercise.",
+      "Avoiding movement again?",
+      "Body’s not gonna train itself."
+    ]
+  },
+
+  /* ========== MUSIC ========== */
+
+  music: {
+
+    completed: [
+      "You made music today. Love that.",
+      "Creative and disciplined.",
+      "Proud of you, Jak."
+    ],
+
+    partial: [
+      "You opened the project.",
+      "You poked at it.",
+      "Creative warmup."
+    ],
+
+    avoided: [
+      "You avoided music work.",
+      "Scared of your own talent?",
+      "Creative avoidance."
+    ]
+  },
+
+  /* ========== ART ========== */
+
+  art: {
+
+    completed: [
+      "You made art. Cute.",
+      "Creative brain engaged.",
+      "Proud of you."
+    ],
+
+    partial: [
+      "You sketched a bit.",
+      "You tried.",
+      "Warmup counts."
+    ],
+
+    avoided: [
+      "You avoided art.",
+      "Creative block?",
+      "You didn’t even start."
+    ]
+  },
+
+  /* ========== COOKING ========== */
+
+  cooking: {
+
+    completed: [
+      "You fed yourself. Good.",
+      "Sustained life successfully.",
+      "I like when you eat properly."
+    ],
+
+    partial: [
+      "Snack dinner?",
+      "Half effort meal.",
+      "Nutrition… adjacent."
+    ],
+
+    avoided: [
+      "You didn’t cook.",
+      "Surviving on vibes again?",
+      "You skipped eating properly."
+    ]
+  }
+
 };
 
-/* ---------- ROUTER ---------- */
+/* ---------- RANDOM LINE ROUTER ---------- */
 
-function getDialogue(task, event) {
-  const pack = packs[task.type] || packs.general;
-  const lines = pack[event] || [];
-  if (!lines.length) return `[${task.type}] → ${event}`;
-  return lines[Math.min(task.escalation || 0, lines.length - 1)];
+function getDialogue(task, result){
+
+  const pack = dialogue[task.type] || dialogue.general;
+  if(!pack) return task.title;
+
+  const pool = pack[result];
+  if(!pool || pool.length === 0) return task.title;
+
+  return pool[Math.floor(Math.random() * pool.length)];
 }
+
 
 /* ---------- STATE ---------- */
 
@@ -1007,7 +1192,7 @@ function checkTasks() {
     const endTime = t.start + (t.duration * 60000);
     if (now > endTime) {
       activeTask = t;
-      const line = getDialogue(t, "missed");
+      const line = getDialogue(t, "avoided");
       document.getElementById("lockText").innerText = `${line}\n\n[${t.type}] ${t.title}`;
       document.getElementById("lockScreen").style.display = "flex";
       break;
@@ -1104,7 +1289,7 @@ document.getElementById("gearButton").addEventListener("click", toggleOptions);
 function devTrigger(){
   const fake = {...testTask, title: "TEST: " + (testTask.title || "TEST")};
   activeTask = fake;
-  const line = getDialogue(fake, "missed");
+  const line = getDialogue(t, "avoided");
   document.getElementById("lockText").innerText = `${line}\n\n[${fake.type}] ${fake.title}`;
   document.getElementById("lockScreen").style.display = "flex";
 }
@@ -1123,3 +1308,4 @@ updateDayBar();
 
 </body>
 </html>
+
