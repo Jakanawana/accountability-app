@@ -461,13 +461,14 @@
     </div>
 
     <!-- response buttons (also clickable bubbles via JS) -->
-    <div id="lockButtons" style="margin-top:1rem;">
-      <button class="dialog-btn primary" onclick="respondCompleted()">I did it</button>
-      <button class="dialog-btn" onclick="respondPartial()">I started</button>
-      <button class="dialog-btn" onclick="respondAvoided()">I avoided it</button>
-      <button class="dialog-btn" onclick="respondOverwhelmed()">I was overwhelmed</button>
-      <button class="dialog-btn" onclick="respondReschedule()">Reschedule</button>
-    </div>
+<!-- response buttons (also clickable bubbles via JS) -->
+<div id="lockButtons" style="margin-top:1rem;">
+  <button class="dialog-btn primary main-response" onclick="respondCompleted()">I did it</button>
+  <button class="dialog-btn main-response" onclick="respondPartial()">I started</button>
+  <button class="dialog-btn main-response" onclick="respondAvoided()">I avoided it</button>
+  <button class="dialog-btn main-response" onclick="respondOverwhelmed()">I was overwhelmed</button>
+  <button class="dialog-btn main-response" onclick="respondReschedule()">Reschedule</button>
+</div>
     <button id="lockContinueBtn" class="dialog-btn primary" style="display:none;margin-top:0.75rem;">
       Got it
     </button>
@@ -836,23 +837,6 @@ function getDialogue(task, result){
   return (typeof chosen === 'string') ? chosen : (chosen.text || "");
 }
 
-
-
-
-function getDialogue(task, result){
-  // normalize inputs
-  const type = (task && task.type) ? task.type : 'general';
-  const escal = Math.max(0, Math.floor(task && task.escalation ? task.escalation : 0));
-
-  // ensure a type exists
-  const pack = dialogue[type] || dialogue.general;
-  const pool = pack[result];
-
-  if(!pool || pool.length === 0){
-    // fallback: if not found, return a simple title or generic line
-    return task && task.title ? `...${task.title}` : "Okay.";
-  }
-
   // pick entries whose escalation <= current escalation, prefer highest available
   const eligible = pool.filter(entry => (typeof entry.escalation === 'undefined' || entry.escalation <= escal));
   if(eligible.length === 0){
@@ -913,6 +897,97 @@ function sendQuickReply(text){
     const continueBtnLocal = document.getElementById('lockContinueBtn');
     if (continueBtnLocal) continueBtnLocal.style.display = 'block';
   }, 250);
+}
+
+  /* --------------------- Reply input (free-text) ---------------------
+   Creates a small input + send button when NPC text contains a question.
+   The input is NOT part of `.main-response` so it won't be disabled by lockResponses.
+---------------------------------------------------------------------*/
+function showReplyInputIfNeeded(npcText){
+  try {
+    if (!npcText || typeof npcText !== 'string') return;
+    if (!npcText.includes('?')) return;
+
+    // avoid duplicate reply area
+    if (document.getElementById('replyArea')) return;
+
+    const container = document.getElementById('lockBox');
+    if (!container) return;
+
+    const replyWrap = document.createElement('div');
+    replyWrap.id = 'replyArea';
+    replyWrap.style.display = 'flex';
+    replyWrap.style.gap = '8px';
+    replyWrap.style.marginTop = '12px';
+    replyWrap.style.alignItems = 'center';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'replyInput';
+    input.placeholder = 'Type your reply...';
+    input.style.flex = '1';
+    input.style.padding = '10px';
+    input.style.borderRadius = '10px';
+    input.style.border = '1px solid rgba(0,0,0,0.08)';
+    input.autofocus = true;
+
+    const send = document.createElement('button');
+    send.id = 'replySend';
+    send.className = 'dialog-btn';
+    send.innerText = 'Send';
+    send.onclick = () => handleReplySend();
+
+    // allow Enter to send
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleReplySend();
+      }
+    });
+
+    replyWrap.appendChild(input);
+    replyWrap.appendChild(send);
+    // insert below the dialogueWrap but above lockButtons if possible
+    const dialogueWrap = document.getElementById('dialogueWrap');
+    if (dialogueWrap && dialogueWrap.parentNode) {
+      dialogueWrap.parentNode.insertBefore(replyWrap, document.getElementById('lockButtons'));
+    } else {
+      container.appendChild(replyWrap);
+    }
+
+    // focus input
+    setTimeout(()=> { try { document.getElementById('replyInput').focus(); } catch(e){} }, 60);
+  } catch (e) {
+    console.warn('showReplyInputIfNeeded', e);
+  }
+}
+
+function handleReplySend(){
+  const input = document.getElementById('replyInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  // append user bubble
+  appendUserBubble(text);
+
+  // remove reply area (user already answered)
+  const area = document.getElementById('replyArea');
+  if (area) area.remove();
+
+  // allow Cole to respond to the user's typed answer.
+  // We use a special 'answer' result key so dialogue packs can include 'answer' responses.
+  // If none exist, fallback to a general follow-up (we call getDialogue with 'partial' to avoid 'avoided' semantics).
+  const followKey = 'answer';
+  const followReply = (dialogue[activeTask?.type] && dialogue[activeTask.type][followKey]) ? getDialogue(activeTask, followKey) : getDialogue(activeTask, 'partial');
+
+  // slight delay to feel natural
+  setTimeout(()=>{
+    appendNpcBubble(followReply);
+    // after Cole replies to your typed answer, show continue so you can close
+    const continueBtnLocal = document.getElementById('lockContinueBtn');
+    if (continueBtnLocal) continueBtnLocal.style.display = 'block';
+  }, 300);
 }
 
   
@@ -1513,7 +1588,8 @@ let responseLocked = false;
 
 function lockResponses(){
   responseLocked = true;
-  document.querySelectorAll('#lockButtons button').forEach(btn=>{
+  // only disable the core main response buttons so dynamic reply UI remains usable
+  document.querySelectorAll('#lockButtons .main-response').forEach(btn=>{
     btn.disabled = true;
     btn.style.opacity = 0.5;
     btn.style.cursor = 'not-allowed';
@@ -1522,7 +1598,7 @@ function lockResponses(){
 
 function unlockResponses(){
   responseLocked = false;
-  document.querySelectorAll('#lockButtons button').forEach(btn=>{
+  document.querySelectorAll('#lockButtons .main-response').forEach(btn=>{
     btn.disabled = false;
     btn.style.opacity = 1;
     btn.style.cursor = 'pointer';
@@ -1559,11 +1635,12 @@ function handleUserResponse(resultKey){
   appendUserBubble(labelMap[resultKey] || resultKey);
 
 setTimeout(()=>{
-  const reply = getDialogue(activeTask, result);
+  // use resultKey (the correct variable)
+  const reply = getDialogue(activeTask, resultKey);
   appendNpcBubble(reply);
 
-  // show a "Got it" quick-reply button if Cole asked a question
-  showQuickReplyIfNeeded(reply);
+  // if NPC asked a question, show a free-text reply input (so user can answer)
+  showReplyInputIfNeeded(reply);
 
   if(continueBtn){
     continueBtn.style.display = "block";
@@ -1632,6 +1709,7 @@ updateDayBar();
 
 </body>
 </html>
+
 
 
 
