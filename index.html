@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,306 +6,519 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-font-family:system-ui;
-background:#f4efe9;
-margin:0;
-padding:1rem;
-color:#222;
-}
+  body{
+    font-family:system-ui;
+    background:#f4efe9;
+    margin:0;
+    padding:1rem;
+    color:#222;
+  }
 
-h1{text-align:center;margin-bottom:1rem;}
+  h1{text-align:center;margin-bottom:1rem;}
 
-.panel{
-background:white;
-padding:1rem;
-border-radius:14px;
-margin-bottom:1rem;
-box-shadow:0 4px 10px rgba(0,0,0,.05);
-}
+  .panel{
+    background:white;
+    padding:1rem;
+    border-radius:14px;
+    margin-bottom:1rem;
+    box-shadow:0 4px 10px rgba(0,0,0,.05);
+  }
 
-input,button{
-width:100%;
-padding:.7rem;
-margin-top:.5rem;
-font-size:1rem;
-}
+  input,button,select{
+    width:100%;
+    padding:.7rem;
+    margin-top:.5rem;
+    font-size:1rem;
+  }
 
-button{
-border:none;
-border-radius:10px;
-background:#6b7b6b;
-color:white;
-}
+  button{
+    border:none;
+    border-radius:10px;
+    background:#6b7b6b;
+    color:white;
+  }
 
-/* Weekday selector */
+  /* Weekday selector */
+  .dayGrid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:.3rem;
+    margin-top:.5rem;
+  }
 
-.dayGrid{
-display:grid;
-grid-template-columns:repeat(7,1fr);
-gap:.3rem;
-margin-top:.5rem;
-}
+  .dayBtn{
+    background:#ddd;
+    color:#222;
+    padding:.5rem;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:.8rem;
+    text-align:center;
+    user-select:none;
+  }
 
-.dayBtn{
-background:#ddd;
-color:#222;
-padding:.5rem;
-border-radius:8px;
-cursor:pointer;
-font-size:.8rem;
-}
+  .dayBtn.active{
+    background:#6b7b6b;
+    color:white;
+  }
 
-.dayBtn.active{
-background:#6b7b6b;
-color:white;
-}
+  #lockScreen{
+    position:fixed;
+    inset:0;
+    background:#111;
+    color:white;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:2rem;
+    z-index:999;
+  }
 
-#lockScreen{
-position:fixed;
-inset:0;
-background:#111;
-color:white;
-display:none;
-align-items:center;
-justify-content:center;
-text-align:center;
-padding:2rem;
-z-index:999;
-}
+  #lockBox{max-width:420px;}
+  #lockBox button{margin-top:.6rem;display:block;width:100%;}
+  .taskRow{padding:.6rem;border-bottom:1px solid #eee;}
+  .taskMeta{font-size:.85rem;color:#666;margin-top:.2rem;}
+  .typeBadge{font-weight:600;margin-right:.5rem;}
+  .small{font-size:.85rem;padding:.4rem;border-radius:8px;background:#eee;}
+  .flex{display:flex;gap:.5rem;align-items:center;}
 </style>
-
 </head>
 
 <body>
 
 <h1>Show up.</h1>
 
-<!-- Task Input -->
-
+<!-- Progress -->
 <div class="panel">
-
-<input id="taskTitle" placeholder="Task">
-<input id="taskTime" type="time">
-<input id="taskDuration" type="number" placeholder="Minutes">
-
-<!-- Weekday Selector -->
-
-<div class="dayGrid" id="dayGrid">
-<div class="dayBtn" data-day="0">Sun</div>
-<div class="dayBtn" data-day="1">Mon</div>
-<div class="dayBtn" data-day="2">Tue</div>
-<div class="dayBtn" data-day="3">Wed</div>
-<div class="dayBtn" data-day="4">Thu</div>
-<div class="dayBtn" data-day="5">Fri</div>
-<div class="dayBtn" data-day="6">Sat</div>
+  <h3>Today</h3>
+  <div style="width:100%;height:18px;background:#ddd;border-radius:10px;overflow:hidden;">
+    <div id="dayBar" style="height:100%;width:0%;background:linear-gradient(90deg,#4caf50,#ff5252);transition:.3s;"></div>
+  </div>
 </div>
 
-<button onclick="addTask()">Commit</button>
+<!-- Task Input -->
+<div class="panel">
+  <input id="taskTitle" placeholder="Task (e.g. 'Shower', 'Practice guitar')">
+  <input id="taskTime" type="time">
+  <input id="taskDuration" type="number" placeholder="Duration (minutes)">
 
+  <select id="taskType">
+    <!-- Hygiene -->
+    <option value="shower">Shower</option>
+    <option value="facecare">Face routine</option>
+    <option value="teeth">Brush teeth</option>
+
+    <!-- Body -->
+    <option value="exercise">Exercise</option>
+    <option value="stretch">Stretch</option>
+    <option value="sleep">Sleep routine</option>
+
+    <!-- Morning -->
+    <option value="wake">Get out of bed</option>
+    <option value="morning">Morning routine</option>
+
+    <!-- Cleaning -->
+    <option value="room">Clean room</option>
+    <option value="laundry">Laundry</option>
+    <option value="dishes">Dishes</option>
+
+    <!-- Creative -->
+    <option value="music">Music work</option>
+    <option value="art">Art practice</option>
+    <option value="project">Project work</option>
+
+    <!-- Lifestyle -->
+    <option value="youtube">Limit YouTube</option>
+    <option value="social">Limit scrolling</option>
+    <option value="errands">Errands</option>
+
+    <!-- Default -->
+    <option value="general">General</option>
+  </select>
+
+  <div style="margin-top:.6rem;">
+    <div style="font-size:.9rem;margin-bottom:.4rem;">Repeat on:</div>
+    <div class="dayGrid" id="dayGrid">
+      <div class="dayBtn" data-day="0">Sun</div>
+      <div class="dayBtn" data-day="1">Mon</div>
+      <div class="dayBtn" data-day="2">Tue</div>
+      <div class="dayBtn" data-day="3">Wed</div>
+      <div class="dayBtn" data-day="4">Thu</div>
+      <div class="dayBtn" data-day="5">Fri</div>
+      <div class="dayBtn" data-day="6">Sat</div>
+    </div>
+    <div style="font-size:.85rem;color:#666;margin-top:.4rem;">(Leave all days unselected for a one-off task)</div>
+  </div>
+
+  <button onclick="addTask()">Commit</button>
 </div>
 
 <!-- Task List -->
+<div class="panel" id="taskList">
+  <p>No commitments yet.</p>
+</div>
 
-<div class="panel" id="taskList"></div>
-
-<!-- Lock -->
-
+<!-- Lock Screen -->
 <div id="lockScreen">
-<h2 id="lockText"></h2>
-<button onclick="completeTask()">Done</button>
+  <div id="lockBox">
+    <h2 id="lockText"></h2>
+
+    <div style="margin-top:1rem;">
+      <button onclick="respondCompleted()">I did it</button>
+      <button onclick="respondPartial()">I started</button>
+      <button onclick="respondAvoided()">I avoided it</button>
+      <button onclick="respondOverwhelmed()">I was overwhelmed</button>
+      <button onclick="respondReschedule()">Reschedule</button>
+    </div>
+
+    <div style="margin-top:12px;">
+      <button style="background:#333;margin-top:8px;" onclick="closeLock()">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <script>
+/* ---------- BOOTSTRAP & NORMALIZE ---------- */
+
+// Load tasks and normalize older entries
+let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+
+// Normalize: ensure objects have required fields; remove clearly invalid ones
+tasks = (tasks || []).map(t => {
+  // if legacy missing duration, skip (we don't rely on those)
+  if (!t) return null;
+  if (typeof t.duration === "undefined" || t.duration === null) {
+    return null;
+  }
+  // ensure arrays exist
+  if (!Array.isArray(t.days)) t.days = t.days ? (Array.isArray(t.days) ? t.days : []) : [];
+  if (typeof t.template === "undefined") t.template = !!(t.days && t.days.length > 0 && t.template !== false);
+  if (typeof t.type === "undefined") t.type = t.type || "general";
+  if (typeof t.day === "undefined") t.day = new Date(t.start || Date.now()).toDateString();
+  return t;
+}).filter(Boolean);
+
+localStorage.setItem("tasks", JSON.stringify(tasks));
+
+/* ---------- PACK ENGINE (placeholder content) ---------- */
+
+const packs = {
+  general: { avoidance: ["You said you’d do this.", "You’re avoiding it."], interrogation: ["What happened?"], care: ["You okay?"] },
+  shower: { avoidance: ["You skipped showering."], interrogation: ["Did you feel too tired or just avoiding it?" ], care: ["You deserve to feel clean — you okay?"] },
+  facecare: { avoidance: ["You skipped face routine."], interrogation: ["What stopped you?" ], care: ["Skin care helps mood—did something come up?"] },
+  wake: { avoidance: ["You didn't get up."], interrogation: ["What happened with sleep?"], care: ["You rested enough?"] },
+  exercise: { avoidance: ["You avoided your workout."], interrogation: ["Was it motivation or fatigue?" ], care: ["Body check — are you sore?"] },
+  music: { avoidance: ["You avoided music work."], interrogation: ["Which part blocked you?" ], care: ["Creative blocks happen — you okay?"] },
+  youtube: { avoidance: ["You watched videos instead."], interrogation: ["How many minutes?" ], care: ["Short break okay — but did you want to do the task?"] },
+  // more packs added later
+};
+
+/* ---------- ROUTER ---------- */
+
+function getDialogue(task, event) {
+  const pack = packs[task.type] || packs.general;
+  const lines = pack[event] || [];
+  if (!lines.length) return `[${task.type}] → ${event}`;
+  // choose line by escalation (bounded)
+  return lines[Math.min(task.escalation || 0, lines.length - 1)];
+}
 
 /* ---------- STATE ---------- */
 
-let tasks =
-JSON.parse(localStorage.getItem("tasks")||"[]");
+let activeTask = null;
 
-let activeTask=null;
+/* ---------- UI: day selector behavior ---------- */
 
-/* ---------- DAY SELECTOR ---------- */
-
-document
-.querySelectorAll(".dayBtn")
-.forEach(btn=>{
-
-btn.addEventListener("click",()=>{
-
-btn.classList.toggle("active");
-
+document.querySelectorAll(".dayBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    btn.classList.toggle("active");
+  });
 });
 
-});
+/* ---------- SAVE / RENDER / HELPERS ---------- */
 
-/* ---------- SAVE ---------- */
+function save() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  render();
+  updateDayBar();
+}
 
-function save(){
+function formatTimeFromMinutes(mins) {
+  const h = String(Math.floor(mins / 60)).padStart(2, "0");
+  const m = String(mins % 60).padStart(2, "0");
+  return `${h}:${m}`;
+}
 
-localStorage.setItem(
-"tasks",
-JSON.stringify(tasks)
-);
+function render() {
+  const list = document.getElementById("taskList");
+  list.innerHTML = "";
+
+  // show today's non-template tasks and next-up templates (optional)
+  const today = new Date().toDateString();
+
+  // Active, non-template tasks
+  const active = tasks.filter(t => !t.template && !t.done && new Date(t.day).toDateString() === today);
+
+  if (active.length === 0) {
+    list.innerHTML = "<p>No commitments yet.</p>";
+    return;
+  }
+
+  active.forEach(t => {
+    const div = document.createElement("div");
+    div.className = "taskRow";
+
+    const startDate = new Date(t.start);
+    const endDate = new Date(t.start + t.duration * 60000);
+
+    div.innerHTML = `
+      <div class="flex">
+        <div class="typeBadge small">${t.type}</div>
+        <div style="flex:1">
+          <div><strong>${t.title}</strong></div>
+          <div class="taskMeta">${startDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} — ends ${endDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+      </div>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+/* ---------- ADD TASK (handles template vs one-off) ---------- */
+
+function addTask() {
+  const title = document.getElementById("taskTitle").value.trim();
+  const time = document.getElementById("taskTime").value;
+  const duration = parseInt(document.getElementById("taskDuration").value, 10);
+  const type = document.getElementById("taskType").value;
+
+  const selectedDays = [...document.querySelectorAll(".dayBtn.active")].map(b => parseInt(b.dataset.day, 10));
+
+  if (!title || !time || !duration) return;
+
+  // parse hours/minutes
+  const [h, m] = time.split(":").map(Number);
+
+  // If user selected days => create a template recurring task
+  if (selectedDays.length > 0) {
+    const template = {
+      id: Date.now(),
+      title,
+      type,
+      // store a representative start time (we'll use startHour/startMinute when spawning)
+      startHour: h,
+      startMinute: m,
+      duration,
+      days: selectedDays,       // [0..6]
+      template: true,
+      done: false,
+      response: null,
+      escalation: 0,
+      lastPrompt: 0,
+      day: new Date().toDateString()
+    };
+    tasks.push(template);
+    save();
+    // clear inputs (friendly)
+    document.getElementById("taskTitle").value = "";
+    document.getElementById("taskTime").value = "";
+    document.getElementById("taskDuration").value = "";
+    document.querySelectorAll(".dayBtn").forEach(b => b.classList.remove("active"));
+    return;
+  }
+
+  // Otherwise create a one-off task for today at the specified time (if that time is today future; otherwise next day)
+  const now = new Date();
+  const start = new Date();
+  start.setHours(h, m, 0, 0);
+  // if the chosen time is earlier than now, assume it's the nearest occurrence (today already past => schedule tomorrow)
+  if (start.getTime() < Date.now()) start.setDate(start.getDate() + 1);
+
+  const oneOff = {
+    id: Date.now(),
+    title,
+    type,
+    start: start.getTime(),
+    duration,
+    days: [],
+    template: false,
+    done: false,
+    response: null,
+    escalation: 0,
+    lastPrompt: 0,
+    day: start.toDateString()
+  };
+
+  tasks.push(oneOff);
+  save();
+
+  // clear inputs
+  document.getElementById("taskTitle").value = "";
+  document.getElementById("taskTime").value = "";
+  document.getElementById("taskDuration").value = "";
+}
+
+/* ---------- SPAWN RECURRING (weekday-based) ---------- */
+
+function spawnRecurring() {
+  const now = new Date();
+  const todayIdx = now.getDay(); // 0..6
+
+  // find templates that include today
+  const templates = tasks.filter(t => t.template === true);
+
+  templates.forEach(t => {
+    if (!Array.isArray(t.days) || t.days.length === 0) return;
+    if (!t.days.includes(todayIdx)) return;
+
+    // check whether today's instance already exists (non-template with same title and same day)
+    const exists = tasks.some(x =>
+      !x.template &&
+      x.title === t.title &&
+      new Date(x.day).toDateString() === new Date().toDateString()
+    );
+
+    if (exists) return;
+
+    // create new instance for today using template's hour/minute
+    const start = new Date();
+    // use stored hour/minute if available, otherwise derive from t.start
+    let hour = typeof t.startHour !== "undefined" ? t.startHour : new Date(t.start).getHours();
+    let minute = typeof t.startMinute !== "undefined" ? t.startMinute : new Date(t.start).getMinutes();
+    start.setHours(hour, minute, 0, 0);
+
+    // If the scheduled time is already past for today, we still spawn (so the check can immediately detect missed)
+    tasks.push({
+      id: Date.now() + Math.floor(Math.random()*1000),
+      title: t.title,
+      type: t.type || "general",
+      start: start.getTime(),
+      duration: t.duration,
+      days: t.days.slice(),
+      template: false,
+      done: false,
+      response: null,
+      escalation: 0,
+      lastPrompt: 0,
+      day: new Date().toDateString()
+    });
+  });
+
+  save();
+}
+
+/* ---------- CHECK OVERDUE & TRIGGER LOCK ---------- */
+
+function checkTasks() {
+  const now = Date.now();
+
+  tasks.forEach(t => {
+    if (t.template || t.done) return;
+
+    // defensive: if missing duration, skip
+    if (!t.duration) return;
+
+    const endTime = t.start + (t.duration * 60000);
+
+    if (now > endTime) {
+      // set as active and open lock (first overdue triggers)
+      activeTask = t;
+      const line = getDialogue(t, "missed");
+      document.getElementById("lockText").innerText = `${line}\n\n[${t.type}] ${t.title}`;
+      document.getElementById("lockScreen").style.display = "flex";
+    }
+  });
+}
+
+/* ---------- RESPONSE HANDLERS (store responses) ---------- */
+
+function respondCompleted() {
+  if (!activeTask) return;
+  activeTask.response = "completed";
+  activeTask.done = true;
+  closeLock();
+  save();
+}
+
+function respondPartial() {
+  if (!activeTask) return;
+  activeTask.response = "partial";
+  // keep activeTask not done, but mark partial — you might want a recheck later
+  closeLock();
+  save();
+}
+
+function respondAvoided() {
+  if (!activeTask) return;
+  activeTask.response = "avoided";
+  activeTask.avoids = (activeTask.avoids || 0) + 1;
+  // apply the avoidance logic: if avoided twice, escalate and keep lock closed but log
+  if (activeTask.avoids >= 2) {
+    activeTask.escalation = (activeTask.escalation || 0) + 1;
+    // keep it logged as avoided; you might want to leave it as missed (not rescheduled)
+  } else {
+    // simple leniency: reschedule to +15 minutes
+    activeTask.start = Date.now() + 15*60000;
+    activeTask.lastPrompt = 0;
+  }
+  closeLock();
+  save();
+}
+
+function respondOverwhelmed() {
+  if (!activeTask) return;
+  activeTask.response = "overwhelmed";
+  // small reschedule but keep a care flag
+  activeTask.start = Date.now() + 30*60000;
+  activeTask.lastPrompt = 0;
+  closeLock();
+  save();
+}
+
+function respondReschedule() {
+  if (!activeTask) return;
+  activeTask.response = "rescheduled";
+  activeTask.start = Date.now() + 30*60000;
+  activeTask.lastPrompt = 0;
+  closeLock();
+  save();
+}
+
+function closeLock() {
+  document.getElementById("lockScreen").style.display = "none";
+}
+
+/* ---------- DAY BAR (today scoring) ---------- */
+
+function updateDayBar() {
+  const today = new Date().toDateString();
+  const todayTasks = tasks.filter(t => t.day === today && !t.template);
+
+  if (todayTasks.length === 0) {
+    document.getElementById("dayBar").style.width = "0%";
+    return;
+  }
+
+  let score = 0;
+  todayTasks.forEach(t => {
+    if (t.response === "completed") score += 1;
+    else if (t.response === "avoided") score -= 1;
+  });
+
+  const percent = ((score + todayTasks.length) / (2 * todayTasks.length)) * 100;
+  document.getElementById("dayBar").style.width = Math.max(0, percent) + "%";
+}
+
+/* ---------- START: spawn + intervals ---------- */
+
+spawnRecurring();
+setInterval(spawnRecurring, 60 * 60 * 1000); // hourly spawn
+setInterval(checkTasks, 60 * 1000); // check every minute
 
 render();
-
-}
-
-/* ---------- ADD ---------- */
-
-function addTask(){
-
-let title=
-document.getElementById("taskTitle").value;
-
-let time=
-document.getElementById("taskTime").value;
-
-let duration=parseInt(
-document.getElementById("taskDuration").value
-);
-
-let days=[...document
-.querySelectorAll(".dayBtn.active")]
-.map(b=>parseInt(b.dataset.day));
-
-if(!title||!time||!duration)return;
-
-let now=new Date();
-let [h,m]=time.split(":");
-now.setHours(h,m,0,0);
-
-tasks.push({
-
-id:Date.now(),
-title,
-start:now.getTime(),
-duration,
-days,
-template:true,
-done:false
-
-});
-
-save();
-
-}
-
-/* ---------- SPAWN ---------- */
-
-function spawn(){
-
-let today=new Date().getDay();
-
-tasks
-.filter(t=>t.template)
-.forEach(t=>{
-
-if(!t.days.includes(today))return;
-
-let exists=tasks.some(x=>
-!x.template &&
-x.title===t.title &&
-new Date(x.start)
-.toDateString()===
-new Date().toDateString()
-);
-
-if(!exists){
-
-tasks.push({
-
-...t,
-id:Date.now(),
-template:false,
-start:new Date().getTime(),
-done:false
-
-});
-
-}
-
-});
-
-save();
-
-}
-
-/* ---------- RENDER ---------- */
-
-function render(){
-
-let list=
-document.getElementById("taskList");
-
-list.innerHTML="";
-
-tasks
-.filter(t=>!t.template && !t.done)
-.forEach(t=>{
-
-let div=document.createElement("div");
-
-div.textContent=t.title;
-
-list.appendChild(div);
-
-});
-
-}
-
-/* ---------- CHECK ---------- */
-
-function check(){
-
-let now=Date.now();
-
-tasks.forEach(t=>{
-
-if(t.done||t.template)return;
-
-let end=t.start+(t.duration*60000);
-
-if(now>end){
-
-activeTask=t;
-
-document.getElementById(
-"lockText"
-).innerText=t.title;
-
-document.getElementById(
-"lockScreen"
-).style.display="flex";
-
-}
-
-});
-
-}
-
-/* ---------- COMPLETE ---------- */
-
-function completeTask(){
-
-activeTask.done=true;
-
-document.getElementById(
-"lockScreen"
-).style.display="none";
-
-save();
-
-}
-
-/* ---------- START ---------- */
-
-spawn();
-setInterval(spawn,3600000);
-setInterval(check,60000);
-
-render();
+updateDayBar();
 
 </script>
 
