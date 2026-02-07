@@ -1280,21 +1280,134 @@ function updateDayBar() {
 }
 
 /* ---------- OPTIONS + TEST MODE ---------- */
-let optionsOpen = false;
-const testTask = { title: "TEST TASK (sandbox)", type: "test", escalation: 0 };
-function toggleOptions(){ optionsOpen = !optionsOpen; document.getElementById("optionsPanel").style.display = optionsOpen ? "block" : "none"; }
-document.getElementById("gearButton").addEventListener("click", toggleOptions);
+/* ---------- OPTIONS + DEV MODE (ALARM SIMULATOR) ---------- */
 
-// dev functions (wired to visible controls)
-function devTrigger(){
-  const fake = {...testTask, title: "TEST: " + (testTask.title || "TEST")};
-  activeTask = fake;
-  const line = getDialogue(t, "avoided");
-  document.getElementById("lockText").innerText = `${line}\n\n[${fake.type}] ${fake.title}`;
-  document.getElementById("lockScreen").style.display = "flex";
+let optionsOpen = false;
+
+function toggleOptions(){
+  optionsOpen = !optionsOpen;
+  document.getElementById("optionsPanel").style.display =
+    optionsOpen ? "block" : "none";
 }
-function devEscalate(){ testTask.escalation = (testTask.escalation || 0) + 1; devTrigger(); }
-function devReset(){ testTask.escalation = 0; alert("Test escalation reset."); }
+
+document
+  .getElementById("gearButton")
+  .addEventListener("click", toggleOptions);
+
+
+/* ---------- DEV MODE STATE ---------- */
+
+let devEscalation = 0;
+
+
+/* ---------- SHOW / HIDE DEV CONTROLS ---------- */
+
+document.addEventListener("change", (e) => {
+
+  if (e.target && e.target.id === "testToggle") {
+
+    document.getElementById("testControls").style.display =
+      e.target.checked ? "block" : "none";
+
+  }
+
+});
+
+
+/* ---------- DEV MODE UI INJECT ---------- */
+
+const devControlsHTML = `
+
+<div style="margin-top:10px">
+
+<select id="devType">
+  <option value="wake">Wake up</option>
+  <option value="shower">Shower</option>
+  <option value="facecare">Facecare</option>
+  <option value="exercise">Exercise</option>
+  <option value="music">Music</option>
+  <option value="art">Art</option>
+  <option value="cooking">Cooking</option>
+  <option value="general">General</option>
+</select>
+
+<button class="smallBtn" onclick="devSimulate('avoided')">
+Simulate Missed Alarm
+</button>
+
+<button class="smallBtn" onclick="devSimulate('partial')">
+Simulate Partial
+</button>
+
+<button class="smallBtn" onclick="devSimulate('completed')">
+Simulate Completed
+</button>
+
+<button class="smallBtn" onclick="devEscalate()">
+Escalate Tone
+</button>
+
+<button class="smallBtn" onclick="devReset()">
+Reset Escalation
+</button>
+
+</div>
+`;
+
+document.getElementById("testControls").innerHTML = devControlsHTML;
+
+
+/* ---------- DEV SIMULATION ---------- */
+
+function devSimulate(result){
+
+  const type =
+    document.getElementById("devType").value;
+
+  const fakeTask = {
+
+    id: "dev",
+    title: "DEV TEST TASK",
+    type: type,
+    escalation: devEscalation,
+    duration: 10
+
+  };
+
+  activeTask = fakeTask;
+
+  const line =
+    getDialogue(fakeTask, result);
+
+  document.getElementById("lockText").innerText =
+    `${line}\n\n[${type}] Dev Simulation`;
+
+  document.getElementById("lockScreen").style.display =
+    "flex";
+}
+
+
+/* ---------- DEV ESCALATION ---------- */
+
+function devEscalate(){
+
+  devEscalation++;
+
+  alert(
+    "Escalation level: " +
+    devEscalation
+  );
+
+}
+
+
+function devReset(){
+
+  devEscalation = 0;
+
+  alert("Escalation reset.");
+
+}
 
 /* ---------- START: spawn + intervals ---------- */
 spawnRecurring();
@@ -1308,4 +1421,5 @@ updateDayBar();
 
 </body>
 </html>
+
 
