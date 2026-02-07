@@ -6,22 +6,79 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+  /* ---------- THEME VARIABLES ---------- */
+  :root{
+    --bg: #f4efe9;
+    --text: #222;
+    --panel-bg: #ffffff;
+    --muted: #666;
+    --primary: #6b7b6b;
+    --primary-contrast: #ffffff;
+    --accent1: #4caf50;
+    --accent2: #ff5252;
+    --card-shadow: 0 4px 10px rgba(0,0,0,.05);
+    --gear-bg: #ffffff;
+  }
+
+  /* Dark grey theme */
+  .theme-dark{
+    --bg: #111217;
+    --text: #e6e7ea;
+    --panel-bg: #15161a;
+    --muted: #a3a6ad;
+    --primary: #3a3f45;
+    --primary-contrast: #fff;
+    --accent1: #4c6ef5; /* cooler accent */
+    --accent2: #9b5de5;
+    --card-shadow: 0 6px 18px rgba(0,0,0,.5);
+    --gear-bg: #1a1b1f;
+  }
+
+  /* Indigo blue theme */
+  .theme-indigo{
+    --bg: #ebf0ff;
+    --text: #10243a;
+    --panel-bg: #ffffff;
+    --muted: #5b6e87;
+    --primary: #283593;
+    --primary-contrast: #fff;
+    --accent1: #3f51b5;
+    --accent2: #536dfe;
+    --card-shadow: 0 6px 18px rgba(18,35,72,.06);
+    --gear-bg: #ffffff;
+  }
+
+  /* Pink theme */
+  .theme-pink{
+    --bg: #fff0f6;
+    --text: #2b1f2f;
+    --panel-bg: #ffffff;
+    --muted: #8b6a7a;
+    --primary: #d63384;
+    --primary-contrast: #fff;
+    --accent1: #ff6b9f;
+    --accent2: #ff9ac2;
+    --card-shadow: 0 6px 18px rgba(214, 51, 132, .06);
+    --gear-bg: #fff;
+  }
+
+  /* ---------- BASE UI ---------- */
   body{
     font-family:system-ui;
-    background:#f4efe9;
+    background:var(--bg);
     margin:0;
     padding:1rem;
-    color:#222;
+    color:var(--text);
   }
 
   h1{text-align:center;margin-bottom:1rem;}
 
   .panel{
-    background:white;
+    background:var(--panel-bg);
     padding:1rem;
     border-radius:14px;
     margin-bottom:1rem;
-    box-shadow:0 4px 10px rgba(0,0,0,.05);
+    box-shadow:var(--card-shadow);
   }
 
   input,button,select,textarea{
@@ -30,13 +87,17 @@
     margin-top:.5rem;
     font-size:1rem;
     box-sizing:border-box;
+    color:var(--text);
+    background:transparent;
+    border:1px solid rgba(0,0,0,0.06);
+    border-radius:10px;
   }
 
   button{
     border:none;
     border-radius:10px;
-    background:#6b7b6b;
-    color:white;
+    background:var(--primary);
+    color:var(--primary-contrast);
   }
 
   .smallBtn{
@@ -59,25 +120,26 @@
 
   .dayBtn{
     background:#ddd;
-    color:#222;
+    color:var(--text);
     padding:.5rem;
     border-radius:8px;
     cursor:pointer;
     font-size:.8rem;
     text-align:center;
     user-select:none;
+    border:1px solid rgba(0,0,0,0.04);
   }
 
   .dayBtn.active{
-    background:#6b7b6b;
-    color:white;
+    background:var(--primary);
+    color:var(--primary-contrast);
   }
 
   #lockScreen{
     position:fixed;
     inset:0;
-    background:#111;
-    color:white;
+    background:rgba(0,0,0,0.75);
+    color:var(--primary-contrast);
     display:none;
     align-items:center;
     justify-content:center;
@@ -88,10 +150,10 @@
 
   #lockBox{max-width:420px;}
   #lockBox button{margin-top:.6rem;display:block;width:100%;}
-  .taskRow{padding:.6rem;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;}
-  .taskMeta{font-size:.85rem;color:#666;margin-top:.2rem;}
+  .taskRow{padding:.6rem;border-bottom:1px solid rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:space-between;}
+  .taskMeta{font-size:.85rem;color:var(--muted);margin-top:.2rem;}
   .typeBadge{font-weight:600;margin-right:.5rem;}
-  .small{font-size:.85rem;padding:.4rem;border-radius:8px;background:#eee;}
+  .small{font-size:.85rem;padding:.4rem;border-radius:8px;background:rgba(0,0,0,0.03);}
   .flex{display:flex;gap:.5rem;align-items:center;}
 
   /* GEAR (settings) */
@@ -101,13 +163,13 @@
     right:12px;
     width:44px;
     height:44px;
-    background:white;
+    background:var(--gear-bg);
     border-radius:50%;
     display:flex;
     align-items:center;
     justify-content:center;
     font-size:20px;
-    box-shadow:0 4px 10px rgba(0,0,0,.15);
+    box-shadow:0 4px 10px rgba(0,0,0,.12);
     cursor:pointer;
     z-index:1100;
   }
@@ -117,8 +179,8 @@
     display:none;
     position:fixed;
     inset:0;
-    background: rgba(0,0,0,0.6);
-    color:white;
+    background: rgba(0,0,0,0.5);
+    color:var(--primary-contrast);
     z-index:1200;
     padding:2rem;
     box-sizing:border-box;
@@ -127,22 +189,28 @@
   #optionsInner, #editInner{
     max-width:520px;
     margin:0 auto;
-    background:#111;
+    background:var(--panel-bg);
+    color:var(--text);
     padding:1rem;
     border-radius:12px;
+    box-shadow:var(--card-shadow);
   }
 
   #optionsInner h2, #editInner h2{margin-top:0;}
   #testControls button{margin-top:.5rem;}
 
   /* Commitments label */
-  .subhead{font-size:0.9rem;color:#666;margin-bottom:.5rem}
-  .muted{color:#666;font-size:0.85rem}
+  .subhead{font-size:0.9rem;color:var(--muted);margin-bottom:.5rem}
+  .muted{color:var(--muted);font-size:0.85rem}
 
   .actions {display:flex; gap:.5rem; align-items:center;}
   .actionBtn {background:#eee; color:#222; border-radius:8px; padding:.4rem .6rem; border:none; cursor:pointer;}
   .danger {background:#ff6b6b; color:white;}
-  .primary {background:#6b7b6b; color:white;}
+  .primary {background:var(--primary); color:var(--primary-contrast);}
+
+  /* small color swatches for theme selector */
+  .swatch{display:inline-block;width:22px;height:22px;border-radius:6px;margin-right:.5rem;border:1px solid rgba(0,0,0,0.06);vertical-align:middle;}
+  .themeRow{display:flex;gap:.6rem;align-items:center;margin-top:.4rem;}
 </style>
 </head>
 
@@ -157,7 +225,7 @@
 <div class="panel">
   <h3>Today</h3>
   <div style="width:100%;height:18px;background:#ddd;border-radius:10px;overflow:hidden;">
-    <div id="dayBar" style="height:100%;width:0%;background:linear-gradient(90deg,#4caf50,#ff5252);transition:.3s;"></div>
+    <div id="dayBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent1),var(--accent2));transition:.3s;"></div>
   </div>
 </div>
 
@@ -212,7 +280,7 @@
       <div class="dayBtn" data-day="5">Fri</div>
       <div class="dayBtn" data-day="6">Sat</div>
     </div>
-    <div style="font-size:.85rem;color:#666;margin-top:.4rem;">(Leave all days unselected for a one-off task)</div>
+    <div style="font-size:.85rem;color:var(--muted);margin-top:.4rem;">(Leave all days unselected for a one-off task)</div>
   </div>
 
   <button onclick="addTask()">Commit</button>
@@ -314,10 +382,45 @@
     </label>
 
     <div id="testControls" style="display:none;">
-      <div style="margin-bottom:.4rem;color:#ddd;">Test controls (sandbox - no changes to real tasks)</div>
+      <div style="margin-bottom:.4rem;color:var(--muted);">Test controls (sandbox - no changes to real tasks)</div>
       <button onclick="devTrigger()">Trigger test lock</button>
       <button onclick="devEscalate()">Escalate test lock</button>
       <button onclick="devReset()">Reset test escalation</button>
+    </div>
+
+    <hr style="margin:10px 0;border:none;border-top:1px solid rgba(0,0,0,0.06)">
+
+    <div>
+      <div style="font-weight:600;margin-bottom:.4rem;">Theme</div>
+
+      <div class="themeRow">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+          <input type="radio" name="theme" value="light" id="themeLight">
+          <span class="swatch" style="background:linear-gradient(90deg,#f4efe9,#ffffff);border:1px solid rgba(0,0,0,0.06)"></span> Light (default)
+        </label>
+      </div>
+
+      <div class="themeRow">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+          <input type="radio" name="theme" value="dark" id="themeDark">
+          <span class="swatch" style="background:linear-gradient(90deg,#111217,#1b1d22)"></span> Dark grey
+        </label>
+      </div>
+
+      <div class="themeRow">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+          <input type="radio" name="theme" value="indigo" id="themeIndigo">
+          <span class="swatch" style="background:linear-gradient(90deg,#3f51b5,#536dfe)"></span> Indigo blue
+        </label>
+      </div>
+
+      <div class="themeRow">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+          <input type="radio" name="theme" value="pink" id="themePink">
+          <span class="swatch" style="background:linear-gradient(90deg,#ff6b9f,#ff9ac2)"></span> Pink
+        </label>
+      </div>
+
     </div>
 
     <div style="margin-top:1rem;">
@@ -386,6 +489,35 @@ function wireDayGrid(gridRootSelector){
 // wire both grids
 wireDayGrid("#dayGrid");
 wireDayGrid("#editDayGrid");
+
+/* ---------- THEME HANDLING ---------- */
+
+const THEME_KEY = "showup_theme";
+
+function applyTheme(name){
+  // remove all theme classes
+  document.body.classList.remove("theme-dark","theme-indigo","theme-pink");
+  if(name === "dark") document.body.classList.add("theme-dark");
+  if(name === "indigo") document.body.classList.add("theme-indigo");
+  if(name === "pink") document.body.classList.add("theme-pink");
+  // update radio UI
+  const radios = document.querySelectorAll('input[name="theme"]');
+  radios.forEach(r=>r.checked = (r.value === (name || "light")));
+  // persist
+  try{ localStorage.setItem(THEME_KEY, name || "light"); }catch(e){}
+}
+
+// restore theme on load
+const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+applyTheme(savedTheme);
+
+// wire theme radio controls
+document.querySelectorAll('input[name="theme"]').forEach(r=>{
+  r.addEventListener("change", (e)=>{
+    if(!e.target.checked) return;
+    applyTheme(e.target.value === "light" ? "light" : e.target.value);
+  });
+});
 
 /* ---------- SAVE / RENDER / HELPERS ---------- */
 
@@ -610,8 +742,8 @@ function spawnRecurringForTemplate(template){
   if (exists) return;
 
   const start = new Date();
-  let hour = typeof template.startHour !== "undefined" ? template.startHour : new Date(template.start).getHours();
-  let minute = typeof template.startMinute !== "undefined" ? template.startMinute : new Date(template.start).getMinutes();
+  let hour = typeof template.startHour !== "undefined" ? template.startHour : new Date(template.start || Date.now()).getHours();
+  let minute = typeof template.startMinute !== "undefined" ? template.startMinute : new Date(template.start || Date.now()).getMinutes();
   start.setHours(hour, minute, 0, 0);
 
   tasks.push({
