@@ -1354,6 +1354,14 @@ if(continueBtn){
   });
 }
 
+const continueBtn = document.getElementById("lockContinueBtn");
+if(continueBtn){
+  continueBtn.addEventListener("click", ()=>{
+    closeLock();
+    unlockResponses();
+  });
+}
+
 /* Override your existing handler safely */
 
 function handleUserResponse(resultKey){
