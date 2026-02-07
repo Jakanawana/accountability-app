@@ -748,101 +748,94 @@ const dialogue = {
     ]
   },
 
-  wake: {
-    /* escalation 0 = playful snark; 1 = sharper; 2 = rude bully; 3 = ruthless bully */
-    completed: [
-      { escalation: 0, text:
-`You beat the bed. Proud — but don’t let it go to your head.
-You got up and didn’t crawl back under. That’s already stealing a piece of the day.
-What was first? Shower, stretch, or doomscroll avoidance?`},
-      { escalation: 1, text:
-`Oh. You actually got up on time. Miracles happen.
-Look at you, slightly less pathetic this morning.
-Tell me: first move after rising — phone or actual movement?`},
-      { escalation: 2, text:
-`Good. You stood up. Bare minimum, but I’ll take it.
-You better not be using the rest of the morning to sulk in bed. What’s your first adult action?`},
-      { escalation: 3, text:
-`You got your lazy carcass upright. Wow — hold the parade.
-Do the thing that proves you deserve oxygen: describe what you did next.`}
-    ],
+ wake: {
+  /* escalation 0 = playful snark; 1 = sharper; 2 = rude bully; 3 = ruthless bully */
+  completed: [
+    { escalation: 0, text:
+`You beat the bed. Proud — but don’t let it swell your head.
+You stood up instead of liquefying into the mattress. Good. Now prove it wasn’t a fluke.
+What did you do next — phone pat, stretch, or sink back into doomscrolling?`},
+    { escalation: 1, text:
+`Huh. You actually got up. Don’t faint from the shock.
+You’re awake — slightly less pathetic. What’s first: teeth, shower, or another phone funeral?`},
+    { escalation: 2, text:
+`Alright, you hauled yourself out of the sack. Barely earned oxygen for a minute, but fine.
+I expect something adult: shower or at least pretending to be human.`},
+    { escalation: 3, text:
+`You dragged your corpse upright. That was pathetic and admirable in equal parts.
+Say one concrete thing you did — or I’ll start reminding you like a sad little drill sergeant.`}
+  ],
 
-    partial: [
-      { escalation: 0, text:
-`You started — slow, but started. Snooze counted as resistance, not victory.
-If you’re proud of 20% effort, fine. If not, try attacking it in the next twenty minutes.
-Did you snooze or get up after one ring?`},
-      { escalation: 1, text:
-`You snoozed. Again? Cute. One more snooze and I’ll put your alarm on a loop of embarrassing voicemails.
-How long did you stall for?`},
-      { escalation: 2, text:
-`Snoozing is just lying to yourself with better branding.
-Next time, get up before I upgrade you to salty passive-aggressive notifications.
-How many times did you hit snooze?`},
-      { escalation: 3, text:
-`You laid there like an overcooked noodle and hit snooze like it owed you money.
-I expect cleanup: get out of bed within five minutes next time or I’ll escalate the mocking.`}
-    ],
+  partial: [
+    { escalation: 0, text:
+`You stirred and half-moved. Not victory, but not a total loss.
+Snoozing is effort — bad effort. Did you snooze once or thrice like a lazy metronome?`},
+    { escalation: 1, text:
+`Snoozes again. Cute. You hit it like it owed you money.
+Tell me honestly: how many times did you betray the alarm?`},
+    { escalation: 2, text:
+`You gave the snooze button a trust exercise and it failed you.
+Next time, get up before I swap your ringtone to a mocking choir.`},
+    { escalation: 3, text:
+`Enough. Hitting snooze is lying to yourself with better branding.
+If you don’t want to be roasted, stand up within five minutes tomorrow.`}
+  ],
 
-    avoided: [
-      { escalation: 0, text:
-`You lost to the bed. I get it — beds are great con artists — but you made a promise.
-What happened? Overslept, ignored alarm, or soul-decided to die for an extra hour?`},
-      { escalation: 1, text:
-`Skipped it. That pattern’s starting. Bed wants you to stay; life wants you to show up.
-Be honest: was it exhaustion or deliberate avoidance?`},
-      { escalation: 2, text:
-`You ignored the alarm. Again. That’s not charming, that’s a habit that eats days.
-If you keep this up we’re renaming you Sleeping Beauty but without the castle.`},
-      { escalation: 3, text:
-`You ghosted an entire morning — real commitment to failure there.
-Fix: set a second, louder alarm and actually stand up when it rings. No excuses.`}
-    ],
+  avoided: [
+    { escalation: 0, text:
+`You lost to the bed. Again. Beds are con artists but you don’t need the lecture — you need action.
+What happened: accident, deliberate, or did your soul want a nap?`},
+    { escalation: 1, text:
+`You ghosted your morning. That’s a choice — not a cute one.
+Was it real exhaustion or dramatic avoidance? Answer me.`},
+    { escalation: 2, text:
+`Ignored alarm, snoozed into oblivion. That pattern eats days alive.
+Fix: set a brutal second alarm and put it across the room, not under your pillow.`},
+    { escalation: 3, text:
+`You single-handedly extended last night. Bold, but destructive.
+I’m done with sympathy — practical plan: two alarms + punishments. Put your phone in the hall.`}
+  ],
 
-    overwhelmed: [
-      { escalation: 0, text:
-`Overwhelmed mornings are real. If your brain’s a swamp right now, don’t storm the castle.
-One tiny goal: sit up. Put feet on floor. Breathe. That is enough for now.`},
-      { escalation: 1, text:
-`You’re overwhelmed. Fine. Pause the guilt, take the tiniest action: brush teeth or splash water.
-Report back. I’ll be mean later, but I’ll also notice progress.`},
-      { escalation: 2, text:
-`Overwhelmed is not a permission slip for disappearing. Do something — anything — that counts as movement.
-If you can’t, pick one five-minute action and do it. I promise I’ll mock less if you try.`},
-      { escalation: 3, text:
-`If everything feels like quicksand, that’s crap — but staying in bed makes it worse.
-Stand up, even if you wobble. I’ll roast you less if you actually take one step.`}
-    ]
-  }
+  overwhelmed: [
+    { escalation: 0, text:
+`Overwhelm is valid. Start tiny: sit up, put feet on floor, breathe for thirty seconds.
+That is enough to begin.`},
+    { escalation: 1, text:
+`You’re drowning in everything. Fine. Do one five-minute thing: brush teeth or splash water.
+Do it and tell me — I’ll be less of a nightmare if you try.`},
+    { escalation: 2, text:
+`Overwhelm doesn’t excuse disappearing. Move one limb. Movement beats inertia.
+If you can’t, set a five-minute timer and try one tiny, boring task.`},
+    { escalation: 3, text:
+`If the world is heavy, I get it. But staying in bed isn’t bravery, it’s vanishing.
+Stand up. Walk to the sink. That’s the minimum I will accept.`}
+  ]
+}
 
   // you can add other types (music, exercise, etc.) below using the same format
 };
 
-/* getDialogue picks the best entry <= escalation, falls back gracefully */
+/* getDialogue: choose a random eligible entry (escalation <= task.escalation).
+   This increases variety while still honoring escalation. */
 function getDialogue(task, result){
   const type = (task && task.type) ? task.type : 'general';
-  const escal = Math.max(0, Math.floor(task && (typeof task.escalation !== 'undefined') ? task.escalation : 0));
+  const escal = Math.max(0, Math.floor((task && typeof task.escalation !== 'undefined') ? task.escalation : 0));
 
   const pack = dialogue[type] || dialogue.general;
   const pool = pack[result];
 
-  if(!pool || pool.length === 0){
+  if (!pool || pool.length === 0) {
     return task && task.title ? `...${task.title}` : "Okay.";
   }
 
-  // eligible: escalation <= current escalation
+  // eligible = entries with escalation <= current escalation
   const eligible = pool.filter(entry => (typeof entry.escalation === 'undefined' || entry.escalation <= escal));
-  if(eligible.length === 0){
-    // fallback: pick a random entry from pool
-    const any = pool[Math.floor(Math.random()*pool.length)];
-    return (typeof any === 'string') ? any : (any.text || "");
-  }
+  const candidates = eligible.length ? eligible : pool;
 
-  const maxEsc = Math.max(...eligible.map(e => (typeof e.escalation === 'undefined' ? 0 : e.escalation)));
-  const top = eligible.filter(e => (typeof e.escalation === 'undefined' ? 0 : e.escalation) === maxEsc);
-  const chosen = top[Math.floor(Math.random()*top.length)];
+  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
   return (typeof chosen === 'string') ? chosen : (chosen.text || "");
 }
+
 
 
 
@@ -875,7 +868,54 @@ function getDialogue(task, result){
   return (typeof chosen === 'string') ? chosen : (chosen.text || '');
 }
 
+// show a temporary "Got it" reply button when NPC text contains a question
+function showQuickReplyIfNeeded(npcText){
+  try {
+    if (!npcText || typeof npcText !== 'string') return;
+    if (!npcText.includes('?')) return;
 
+    // avoid duplicate button
+    if (document.getElementById('quickReplyGotIt')) return;
+
+    const container = document.getElementById('lockButtons');
+    if (!container) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'dialog-btn';
+    btn.id = 'quickReplyGotIt';
+    btn.innerText = 'Got it';
+    btn.onclick = function(){
+      sendQuickReply('Got it');
+      // remove the quick reply after click
+      const el = document.getElementById('quickReplyGotIt');
+      if (el) el.remove();
+    };
+    container.appendChild(btn);
+  } catch (e){
+    console.warn('showQuickReplyIfNeeded error', e);
+  }
+}
+
+// user pressed the quick reply — append user bubble and give a short acknowledgement from Cole
+function sendQuickReply(text){
+  appendUserBubble(text);
+
+  // short acknowledgement pool (varies)
+  setTimeout(()=>{
+    const ackPool = [
+      "Fine. Noted.",
+      "Mm. Good. Move on.",
+      "Okay. Don’t make me repeat myself."
+    ];
+    const ack = ackPool[Math.floor(Math.random() * ackPool.length)];
+    appendNpcBubble(ack);
+
+    const continueBtnLocal = document.getElementById('lockContinueBtn');
+    if (continueBtnLocal) continueBtnLocal.style.display = 'block';
+  }, 250);
+}
+
+  
 /* ---------- STATE ---------- */
 
 let activeTask = null;
@@ -1518,13 +1558,18 @@ function handleUserResponse(resultKey){
 
   appendUserBubble(labelMap[resultKey] || resultKey);
 
-  setTimeout(()=>{
-    const reply = getDialogue(activeTask, resultKey);
-    appendNpcBubble(reply);
-    if(continueBtn){
-      continueBtn.style.display = "block";
-    }
-  }, 300);
+setTimeout(()=>{
+  const reply = getDialogue(activeTask, result);
+  appendNpcBubble(reply);
+
+  // show a "Got it" quick-reply button if Cole asked a question
+  showQuickReplyIfNeeded(reply);
+
+  if(continueBtn){
+    continueBtn.style.display = "block";
+  }
+}, 300);
+
 
   // store result
   activeTask.response = resultKey;
@@ -1587,6 +1632,7 @@ updateDayBar();
 
 </body>
 </html>
+
 
 
 
