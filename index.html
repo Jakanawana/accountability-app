@@ -26,7 +26,7 @@ margin-bottom:1rem;
 box-shadow:0 4px 10px rgba(0,0,0,.05);
 }
 
-input,button{
+input,button,select{
 width:100%;
 padding:.7rem;
 margin-top:.5rem;
@@ -95,47 +95,29 @@ transition:.3s;"></div>
 </div>
 </div>
 
-<!-- Task Input -->
+<!-- Task Input + Pack Tagging -->
 
 <div class="panel">
 <input id="taskTitle" placeholder="What are you supposed to do?">
 <input id="taskTime" type="time">
 <input id="taskDuration" type="number" placeholder="Duration (minutes)">
+
+<select id="taskType">
+<option value="general">General</option>
+<option value="cleaning">Cleaning</option>
+<option value="hygiene">Hygiene</option>
+<option value="fitness">Fitness</option>
+<option value="creative">Creative</option>
+</select>
+
 <button onclick="addTask()">Commit</button>
+
 </div>
 
 <!-- Task List -->
 
 <div class="panel" id="taskList">
 <p>No commitments yet.</p>
-</div>
-
-<!-- Options Panel -->
-
-<div id="optionsPanel" style="
-display:none;
-position:fixed;
-inset:0;
-background:#000c;
-color:white;
-z-index:998;
-padding:2rem;">
-
-<h2>Options</h2>
-
-<label>
-<input type="checkbox" id="testToggle">
- Enable Test Mode
-</label>
-
-<div id="testControls" style="display:none;margin-top:1rem;">
-<button onclick="devTrigger()">Trigger test lock</button>
-<button onclick="devEscalate()">Escalate test lock</button>
-<button onclick="devReset()">Reset test escalation</button>
-</div>
-
-<br><br> <button onclick="toggleOptions()">Close</button>
-
 </div>
 
 <!-- Lock Screen -->
@@ -151,16 +133,75 @@ padding:2rem;">
 
 <script>
 
-/* ---------- LOAD + CLEAN DATA ---------- */
+/* ---------- LOAD + CLEAN ---------- */
 
 let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-
-// remove legacy tasks without duration
 tasks = tasks.filter(t => t.duration);
+
+/* ---------- PACK ENGINE ---------- */
+
+const packs = {
+
+general:{
+avoidance:[
+"You said you’d do this.",
+"You’re avoiding it.",
+"You’re slipping."
+]
+},
+
+cleaning:{
+avoidance:[
+"You skipped cleaning.",
+"You live here — it matters.",
+"This keeps getting pushed."
+]
+},
+
+hygiene:{
+avoidance:[
+"You skipped hygiene.",
+"You deserve to feel clean.",
+"Routine matters."
+]
+},
+
+fitness:{
+avoidance:[
+"You avoided your workout.",
+"Your body needs consistency.",
+"You said you’d show up."
+]
+},
+
+creative:{
+avoidance:[
+"You avoided creative work.",
+"You can’t grow skills you don’t use.",
+"This matters to you."
+]
+}
+
+};
+
+/* ---------- DIALOGUE ROUTER ---------- */
+
+function getDialogue(task,event){
+
+let pack=packs[task.type]||packs.general;
+
+let lines=pack[event];
+
+if(!lines||lines.length===0)return "...";
+
+return lines[
+Math.min(task.escalation,lines.length-1)
+];
+}
 
 /* ---------- STATE ---------- */
 
-let activeTask = null;
+let activeTask=null;
 
 /* ---------- SAVE ---------- */
 
@@ -177,6 +218,7 @@ function addTask(){
 let title=document.getElementById("taskTitle").value;
 let time=document.getElementById("taskTime").value;
 let duration=parseInt(document.getElementById("taskDuration").value);
+let type=document.getElementById("taskType").value;
 
 if(!title||!time||!duration)return;
 
@@ -187,6 +229,7 @@ now.setHours(h,m,0,0);
 tasks.push({
 id:Date.now(),
 title,
+type,
 start:now.getTime(),
 duration,
 done:false,
@@ -219,6 +262,7 @@ let end=new Date(t.start+(t.duration*60000));
 
 let div=document.createElement("div");
 div.textContent=
+`[${t.type}] `+
 t.title+
 " — ends "+
 end.toLocaleTimeString([],{
@@ -232,7 +276,7 @@ list.appendChild(div);
 });
 }
 
-/* ---------- CHECK OVERDUE ---------- */
+/* ---------- CHECK ---------- */
 
 function checkTasks(){
 
@@ -267,17 +311,10 @@ function triggerLock(task){
 
 activeTask=task;
 
-let tones=[
-"You said you’d do this.",
-"You’re avoiding it.",
-"Still not moving.",
-"This keeps happening.",
-"We’re not letting this slide."
-];
+let line=getDialogue(task,"avoidance");
 
 document.getElementById("lockText").innerText=
-tones[Math.min(task.escalation,tones.length-1)]
-+"\n\n"+task.title;
+line+"\n\n"+task.title;
 
 document.getElementById("lockScreen").style.display="flex";
 }
@@ -304,8 +341,10 @@ function avoidTask(){
 activeTask.avoids++;
 
 if(activeTask.avoids>=2){
+
 document.getElementById("lockText").innerText=
-"You’ve avoided this multiple times.\n\nWe’re not rescheduling it again.";
+"We’re not letting this slide.";
+
 return;
 }
 
@@ -322,7 +361,6 @@ save();
 function updateDayBar(){
 
 let today=new Date().toDateString();
-
 let todayTasks=tasks.filter(t=>t.day===today);
 
 if(todayTasks.length===0){
@@ -344,34 +382,6 @@ document.getElementById("dayBar").style.width=
 Math.max(0,percent)+"%";
 }
 
-/* ---------- OPTIONS ---------- */
-
-let optionsOpen=false;
-
-function toggleOptions(){
-let panel=document.getElementById("optionsPanel");
-optionsOpen=!optionsOpen;
-panel.style.display=optionsOpen?"block":"none";
-}
-
-document.getElementById("gearButton")
-.addEventListener("click",toggleOptions);
-
-/* ---------- TEST MODE ---------- */
-
-let testTask={title:"Test task",escalation:0};
-
-document.addEventListener("change",e=>{
-if(e.target.id==="testToggle"){
-document.getElementById("testControls").style.display=
-e.target.checked?"block":"none";
-}
-});
-
-function devTrigger(){triggerLock(testTask);}
-function devEscalate(){testTask.escalation++;triggerLock(testTask);}
-function devReset(){testTask.escalation=0;}
-
 /* ---------- START ---------- */
 
 setInterval(checkTasks,60000);
@@ -383,5 +393,4 @@ updateDayBar();
 
 </body>
 </html>
-
 
