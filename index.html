@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-  /* ---------- THEME VARIABLES ---------- */
+  /* ---------- THEME VARIABLES (defaults) ---------- */
   :root{
     --bg: #f4efe9;
     --text: #222;
@@ -18,48 +18,24 @@
     --accent2: #ff5252;
     --card-shadow: 0 4px 10px rgba(0,0,0,.05);
     --gear-bg: #ffffff;
+
+    /* parameters (mirrors JS defaults) */
+    --bg-h: 30;
+    --bg-s: 24%;
+    --bg-l: 95%;
+    --panel-l: 100%;
+    --accent-h: 145;
+    --accent-s: 80%;
+    --accent-l: 52%;
   }
 
-  /* Dark grey theme */
-  .theme-dark{
-    --bg: #111217;
-    --text: #e6e7ea;
-    --panel-bg: #15161a;
-    --muted: #a3a6ad;
-    --primary: #3a3f45;
-    --primary-contrast: #fff;
-    --accent1: #4c6ef5;
-    --accent2: #9b5de5;
-    --card-shadow: 0 6px 18px rgba(0,0,0,.5);
-    --gear-bg: #1a1b1f;
-  }
-
-  /* Indigo blue theme */
-  .theme-indigo{
-    --bg: #ebf0ff;
-    --text: #10243a;
-    --panel-bg: #ffffff;
-    --muted: #5b6e87;
-    --primary: #283593;
-    --primary-contrast: #fff;
-    --accent1: #3f51b5;
-    --accent2: #536dfe;
-    --card-shadow: 0 6px 18px rgba(18,35,72,.06);
-    --gear-bg: #ffffff;
-  }
-
-  /* Pink theme */
-  .theme-pink{
-    --bg: #fff0f6;
-    --text: #2b1f2f;
-    --panel-bg: #ffffff;
-    --muted: #8b6a7a;
-    --primary: #d63384;
-    --primary-contrast: #fff;
-    --accent1: #ff6b9f;
-    --accent2: #ff9ac2;
-    --card-shadow: 0 6px 18px rgba(214, 51, 132, .06);
-    --gear-bg: #fff;
+  /* computed vars (these are overwritten by JS when sliders change) */
+  :root{
+    --bg: hsl(var(--bg-h) var(--bg-s) var(--bg-l));
+    --panel-bg: hsl(var(--bg-h) var(--bg-s) var(--panel-l));
+    --accent1: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
+    --accent2: hsl(calc((var(--accent-h) + 30) % 360) var(--accent-s) var(--accent-l));
+    --primary: hsl(var(--accent-h) calc(max(20%, var(--accent-s) - 20%)) calc(max(20%, var(--accent-l) - 24%)));
   }
 
   /* ---------- BASE UI ---------- */
@@ -208,14 +184,11 @@
   .danger {background:#ff6b6b; color:white;}
   .primary {background:var(--primary); color:var(--primary-contrast);}
 
-  /* small color swatches for theme selector */
-  .swatch{display:inline-block;width:22px;height:22px;border-radius:6px;margin-right:.5rem;border:1px solid rgba(0,0,0,0.06);vertical-align:middle;}
-  .themeRow{display:flex;gap:.6rem;align-items:center;margin-top:.4rem;}
-
   /* slider style */
   .sliderRow{display:flex;gap:.6rem;align-items:center;margin-top:.6rem;}
-  .hueValue{min-width:44px;text-align:center;font-weight:600;background:transparent;border:0}
+  .valBox{min-width:48px;text-align:center;font-weight:600;background:transparent;border:0}
   input[type="range"]{width:100%;}
+  .sectionTitle{font-weight:600;margin-top:10px}
 </style>
 </head>
 
@@ -241,36 +214,24 @@
   <input id="taskDuration" type="number" placeholder="Duration (minutes)">
 
   <select id="taskType">
-    <!-- Hygiene -->
+    <!-- options omitted for brevity; same as before -->
     <option value="shower">Shower</option>
     <option value="facecare">Face routine</option>
     <option value="teeth">Brush teeth</option>
-
-    <!-- Body -->
     <option value="exercise">Exercise</option>
     <option value="stretch">Stretch</option>
     <option value="sleep">Sleep routine</option>
-
-    <!-- Morning -->
     <option value="wake">Get out of bed</option>
     <option value="morning">Morning routine</option>
-
-    <!-- Cleaning -->
     <option value="room">Clean room</option>
     <option value="laundry">Laundry</option>
     <option value="dishes">Dishes</option>
-
-    <!-- Creative -->
     <option value="music">Music work</option>
     <option value="art">Art practice</option>
     <option value="project">Project work</option>
-
-    <!-- Lifestyle -->
     <option value="youtube">Limit YouTube</option>
     <option value="social">Limit scrolling</option>
     <option value="errands">Errands</option>
-
-    <!-- Default -->
     <option value="general">General</option>
   </select>
 
@@ -336,6 +297,7 @@
     <input id="editDuration" type="number" placeholder="Duration (minutes)">
 
     <select id="editType">
+      <!-- same options as above -->
       <option value="shower">Shower</option>
       <option value="facecare">Face routine</option>
       <option value="teeth">Brush teeth</option>
@@ -396,47 +358,56 @@
     <hr style="margin:10px 0;border:none;border-top:1px solid rgba(0,0,0,0.06)">
 
     <div>
-      <div style="font-weight:600;margin-bottom:.4rem;">Theme</div>
+      <div class="sectionTitle">Background</div>
 
-      <div class="themeRow">
-        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
-          <input type="radio" name="theme" value="light" id="themeLight">
-          <span class="swatch" style="background:linear-gradient(90deg,#f4efe9,#ffffff);border:1px solid rgba(0,0,0,0.06)"></span> Light (default)
-        </label>
+      <div class="sliderRow" style="margin-top:8px;">
+        <label style="min-width:90px">Hue</label>
+        <input type="range" id="bgHue" min="0" max="360" value="30">
+        <div class="valBox" id="bgHueVal">30</div>
       </div>
 
-      <div class="themeRow">
-        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
-          <input type="radio" name="theme" value="dark" id="themeDark">
-          <span class="swatch" style="background:linear-gradient(90deg,#111217,#1b1d22)"></span> Dark grey
-        </label>
-      </div>
-
-      <div class="themeRow">
-        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
-          <input type="radio" name="theme" value="indigo" id="themeIndigo">
-          <span class="swatch" style="background:linear-gradient(90deg,#3f51b5,#536dfe)"></span> Indigo blue
-        </label>
-      </div>
-
-      <div class="themeRow">
-        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
-          <input type="radio" name="theme" value="pink" id="themePink">
-          <span class="swatch" style="background:linear-gradient(90deg,#ff6b9f,#ff9ac2)"></span> Pink
-        </label>
-      </div>
-
-      <div style="margin-top:12px;font-weight:600;">Accent color</div>
-
-      <!-- Hue slider + color picker -->
       <div class="sliderRow">
-        <input type="range" id="hueSlider" min="0" max="360" value="150" />
-        <div class="hueValue" id="hueValue">150</div>
+        <label style="min-width:90px">Saturation</label>
+        <input type="range" id="bgSat" min="0" max="100" value="24">
+        <div class="valBox" id="bgSatVal">24%</div>
       </div>
 
-      <div style="margin-top:.6rem;display:flex;gap:.6rem;align-items:center;">
-        <input type="color" id="accentColorPicker" value="#4caf50" style="width:56px;padding:0;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"/>
-        <button class="smallBtn" id="resetAccentBtn">Reset accent</button>
+      <div class="sliderRow">
+        <label style="min-width:90px">Lightness</label>
+        <input type="range" id="bgLight" min="0" max="100" value="95">
+        <div class="valBox" id="bgLightVal">95%</div>
+      </div>
+
+      <div class="sectionTitle">Panel</div>
+      <div class="sliderRow" style="margin-top:8px;">
+        <label style="min-width:90px">Panel L</label>
+        <input type="range" id="panelLight" min="0" max="100" value="100">
+        <div class="valBox" id="panelLightVal">100%</div>
+      </div>
+
+      <div class="sectionTitle">Accent</div>
+
+      <div class="sliderRow" style="margin-top:8px;">
+        <label style="min-width:90px">Hue</label>
+        <input type="range" id="accentHue" min="0" max="360" value="145">
+        <div class="valBox" id="accentHueVal">145</div>
+      </div>
+
+      <div class="sliderRow">
+        <label style="min-width:90px">Saturation</label>
+        <input type="range" id="accentSat" min="0" max="100" value="80">
+        <div class="valBox" id="accentSatVal">80%</div>
+      </div>
+
+      <div class="sliderRow">
+        <label style="min-width:90px">Lightness</label>
+        <input type="range" id="accentLight" min="0" max="100" value="52">
+        <div class="valBox" id="accentLightVal">52%</div>
+      </div>
+
+      <div style="margin-top:10px; display:flex; gap:.6rem; align-items:center;">
+        <button class="smallBtn" id="resetCustom">Reset to defaults</button>
+        <div style="font-size:.85rem;color:var(--muted);">Changes save automatically.</div>
       </div>
 
     </div>
@@ -494,7 +465,7 @@ function getDialogue(task, event) {
 let activeTask = null;
 let editingTemplateId = null;
 
-/* ---------- UI: day selector behavior (create fn to apply to any grid) ---------- */
+/* ---------- UI: day selector behavior ---------- */
 
 function wireDayGrid(gridRootSelector){
   const root = document.querySelector(gridRootSelector);
@@ -503,168 +474,111 @@ function wireDayGrid(gridRootSelector){
     btn.onclick = ()=> btn.classList.toggle("active");
   });
 }
-
-// wire both grids
 wireDayGrid("#dayGrid");
 wireDayGrid("#editDayGrid");
 
-/* ---------- THEME + ACCENT HANDLING ---------- */
+/* ---------- CUSTOMIZATION (sliders) ---------- */
 
-const THEME_KEY = "showup_theme";
-const ACCENT_HUE_KEY = "showup_accent_hue";
-const ACCENT_HEX_KEY = "showup_accent_hex";
+const STORAGE_PREFIX = "showup_custom_";
+const defaults = {
+  bgHue: 30,    // warm off-white
+  bgSat: 24,
+  bgLight: 95,
+  panelLight: 100,
+  accentHue: 145,
+  accentSat: 80,
+  accentLight: 52
+};
 
-// apply theme (adds class)
-function applyTheme(name){
-  document.body.classList.remove("theme-dark","theme-indigo","theme-pink");
-  if(name === "dark") document.body.classList.add("theme-dark");
-  if(name === "indigo") document.body.classList.add("theme-indigo");
-  if(name === "pink") document.body.classList.add("theme-pink");
-  document.querySelectorAll('input[name="theme"]').forEach(r=> r.checked = (r.value === (name || "light")));
-  try{ localStorage.setItem(THEME_KEY, name || "light"); }catch(e){}
+function savedOrDefault(key){
+  const val = localStorage.getItem(STORAGE_PREFIX + key);
+  return val === null ? defaults[key] : Number(val);
 }
 
-// set accent by hue (0-360). this sets CSS variables --accent1 / --accent2 / --primary
-function applyAccentHue(hue){
-  if(typeof hue === "undefined" || hue === null) return;
-  hue = Number(hue);
-  const h1 = hue;
-  const h2 = (hue + 30) % 360;
-  // use hsl for nicer dynamic colors; saturation/lightness set to pleasant defaults
-  const accent1 = `hsl(${h1} 80% 52%)`;
-  const accent2 = `hsl(${h2} 80% 52%)`;
-  const primary = `hsl(${h1} 28% 36%)`; // darker for primary
-  document.documentElement.style.setProperty('--accent1', accent1);
-  document.documentElement.style.setProperty('--accent2', accent2);
-  document.documentElement.style.setProperty('--primary', primary);
-  // update color input hex to match approximate hue
-  const hex = hslToHex(h1, 80, 52);
-  try{ localStorage.setItem(ACCENT_HUE_KEY, String(hue)); localStorage.setItem(ACCENT_HEX_KEY, hex);}catch(e){}
-  // update UI elements
-  const picker = document.getElementById('accentColorPicker');
-  if(picker) picker.value = hex;
-  const hueValueEl = document.getElementById('hueValue');
-  if(hueValueEl) hueValueEl.innerText = String(hue);
-  const slider = document.getElementById('hueSlider');
-  if(slider) slider.value = String(hue);
+function applyCustomStylesFromStorage(){
+  const bgHue = savedOrDefault('bgHue');
+  const bgSat = savedOrDefault('bgSat');
+  const bgLight = savedOrDefault('bgLight');
+  const panelLight = savedOrDefault('panelLight');
+  const accentHue = savedOrDefault('accentHue');
+  const accentSat = savedOrDefault('accentSat');
+  const accentLight = savedOrDefault('accentLight');
+
+  // set CSS custom properties
+  document.documentElement.style.setProperty('--bg-h', String(bgHue));
+  document.documentElement.style.setProperty('--bg-s', String(bgSat) + '%');
+  document.documentElement.style.setProperty('--bg-l', String(bgLight) + '%');
+  document.documentElement.style.setProperty('--panel-l', String(panelLight) + '%');
+
+  document.documentElement.style.setProperty('--accent-h', String(accentHue));
+  document.documentElement.style.setProperty('--accent-s', String(accentSat) + '%');
+  document.documentElement.style.setProperty('--accent-l', String(accentLight) + '%');
+
+  // update visible slider labels & inputs
+  const map = [
+    ['bgHue','bgHueVal', bgHue, v => v],
+    ['bgSat','bgSatVal', bgSat, v => v + '%'],
+    ['bgLight','bgLightVal', bgLight, v => v + '%'],
+    ['panelLight','panelLightVal', panelLight, v => v + '%'],
+    ['accentHue','accentHueVal', accentHue, v => v],
+    ['accentSat','accentSatVal', accentSat, v => v + '%'],
+    ['accentLight','accentLightVal', accentLight, v => v + '%']
+  ];
+  map.forEach(([sliderId, labelId, val, fmt])=>{
+    const s = document.getElementById(sliderId);
+    const l = document.getElementById(labelId);
+    if(s) s.value = String(val);
+    if(l) l.innerText = fmt(val);
+  });
+
   // update dayBar gradient live
+  const a1 = `hsl(${accentHue} ${accentSat}% ${accentLight}%)`;
+  const a2 = `hsl(${(accentHue + 30)%360} ${accentSat}% ${accentLight}%)`;
+  document.documentElement.style.setProperty('--accent1', a1);
+  document.documentElement.style.setProperty('--accent2', a2);
+  document.documentElement.style.setProperty('--primary', `hsl(${accentHue} ${Math.max(20, accentSat-20)}% ${Math.max(20, accentLight-24)}%)`);
   const dayBar = document.getElementById('dayBar');
-  if(dayBar) dayBar.style.background = `linear-gradient(90deg, ${accent1}, ${accent2})`;
+  if(dayBar) dayBar.style.background = `linear-gradient(90deg, ${a1}, ${a2})`;
 }
 
-// convert HSL to hex (inputs: h [0-360], s% [0-100], l% [0-100])
-function hslToHex(h, s, l){
-  s /= 100; l /= 100;
-  const k = n => (n + h/30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = n => {
-    const color = l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-    return Math.round(255 * color).toString(16).padStart(2, '0');
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
+// save a single slider value
+function saveCustom(key, value){
+  localStorage.setItem(STORAGE_PREFIX + key, String(value));
+  applyCustomStylesFromStorage();
 }
 
-// convert hex to HSL-ish hue (approx) — used primarily to sync slider when user picks hex color
-function hexToHue(hex){
-  // quick parse
-  hex = hex.replace('#','');
-  if(hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
-  const r = parseInt(hex.slice(0,2),16)/255;
-  const g = parseInt(hex.slice(2,4),16)/255;
-  const b = parseInt(hex.slice(4,6),16)/255;
-  const max = Math.max(r,g,b), min = Math.min(r,g,b);
-  let h = 0;
-  if(max===min) h = 0;
-  else if(max===r) h = (60 * ((g - b) / (max - min)) + 360) % 360;
-  else if(max===g) h = (60 * ((b - r) / (max - min)) + 120) % 360;
-  else h = (60 * ((r - g) / (max - min)) + 240) % 360;
-  return Math.round(h);
-}
-
-// restore saved accent (hue or hex)
-function restoreAccent(){
-  const savedHue = localStorage.getItem(ACCENT_HUE_KEY);
-  const savedHex = localStorage.getItem(ACCENT_HEX_KEY);
-  if(savedHue !== null){
-    applyAccentHue(Number(savedHue));
-  } else if(savedHex){
-    const h = hexToHue(savedHex);
-    applyAccentHue(h);
-  } else {
-    // nothing saved; leave theme defaults
-  }
-}
-
-// on reset: remove custom accent keys and reapply theme defaults (so themes show their own accents)
-function resetAccentToThemeDefault(){
-  try{ localStorage.removeItem(ACCENT_HUE_KEY); localStorage.removeItem(ACCENT_HEX_KEY); }catch(e){}
-  // reapply theme by re-setting theme (forces CSS variables back to theme values)
-  const theme = localStorage.getItem(THEME_KEY) || "light";
-  applyTheme(theme);
-  // manually update dayBar gradient to whatever var is now
-  const dayBar = document.getElementById('dayBar');
-  dayBar.style.background = `linear-gradient(90deg, var(--accent1), var(--accent2))`;
-  // update UI controls to reflect removed accent
-  const slider = document.getElementById('hueSlider');
-  const picker = document.getElementById('accentColorPicker');
-  if(slider) slider.value = 150;
-  if(picker) picker.value = '#4caf50';
-  const hueValueEl = document.getElementById('hueValue');
-  if(hueValueEl) hueValueEl.innerText = '—';
-}
-
-/* ---------- THEME: restore on load ---------- */
-const savedTheme = localStorage.getItem(THEME_KEY) || "light";
-applyTheme(savedTheme);
-restoreAccent(); // apply any saved custom accent after theme
-
-/* wire theme radio controls */
-document.querySelectorAll('input[name="theme"]').forEach(r=>{
-  r.addEventListener("change", (e)=>{
-    if(!e.target.checked) return;
-    const v = e.target.value === "light" ? "light" : e.target.value;
-    applyTheme(v);
-    // if there's a saved accent, keep it (accent overrides theme) — if not, theme defaults show
-    const savedHue = localStorage.getItem(ACCENT_HUE_KEY);
-    if(savedHue) applyAccentHue(Number(savedHue));
-    // refresh dayBar background
-    const dayBar = document.getElementById('dayBar');
-    dayBar.style.background = `linear-gradient(90deg, var(--accent1), var(--accent2))`;
+// wire slider inputs to save+apply
+['bgHue','bgSat','bgLight','panelLight','accentHue','accentSat','accentLight'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', (e)=>{
+    const v = Number(e.target.value);
+    // update label
+    const label = document.getElementById(id + 'Val');
+    if(label){
+      label.innerText = id.toLowerCase().includes('hue') ? String(v) : (String(v) + (id.toLowerCase().includes('hue') ? '' : '%'));
+      if(id.endsWith('Hue')) label.innerText = String(v);
+    }
+    saveCustom(id, v);
   });
 });
 
-/* ---------- wire accent controls ---------- */
-const hueSlider = document.getElementById('hueSlider');
-const colorPicker = document.getElementById('accentColorPicker');
-const resetBtn = document.getElementById('resetAccentBtn');
-
-if(hueSlider){
-  hueSlider.addEventListener('input', (e)=>{
-    const val = Number(e.target.value);
-    document.getElementById('hueValue').innerText = String(val);
-    applyAccentHue(val);
-  });
-}
-
-if(colorPicker){
-  colorPicker.addEventListener('input', (e)=>{
-    const hex = e.target.value;
-    const hue = hexToHue(hex);
-    // set slider to hue and apply
-    const s = document.getElementById('hueSlider');
-    if(s) s.value = String(hue);
-    document.getElementById('hueValue').innerText = String(hue);
-    applyAccentHue(hue);
-  });
-}
-
+// reset button
+const resetBtn = document.getElementById('resetCustom');
 if(resetBtn){
   resetBtn.addEventListener('click', ()=>{
-    resetAccentToThemeDefault();
+    // clear storage keys and reapply defaults
+    ['bgHue','bgSat','bgLight','panelLight','accentHue','accentSat','accentLight'].forEach(k=>{
+      localStorage.removeItem(STORAGE_PREFIX + k);
+    });
+    applyCustomStylesFromStorage();
   });
 }
 
-/* ---------- SAVE / RENDER / HELPERS ---------- */
+// run apply on load
+applyCustomStylesFromStorage();
+
+/* ---------- SAVE / RENDER / HELPERS (task UI) ---------- */
 
 function save() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -691,9 +605,7 @@ function renderToday(){
 
   active.forEach(t => {
     const div = document.createElement("div");
-
     div.className = "taskRow";
-
     const startDate = new Date(t.start);
     const endDate = new Date(t.start + t.duration * 60000);
 
@@ -705,7 +617,6 @@ function renderToday(){
 
     div.appendChild(left);
     div.appendChild(right);
-
     list.appendChild(div);
   });
 }
@@ -725,10 +636,8 @@ function renderCommitments(){
     const row = document.createElement("div");
     row.className = "taskRow";
 
-    // humanize days
     const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
     const daysStr = (Array.isArray(t.days) && t.days.length) ? t.days.map(d => dayNames[d]).join(", ") : "—";
-
     const hh = (typeof t.startHour !== "undefined") ? String(t.startHour).padStart(2,'0') : new Date(t.start).getHours();
     const mm = (typeof t.startMinute !== "undefined") ? String(t.startMinute).padStart(2,'0') : new Date(t.start).getMinutes();
     const timeStr = `${hh}:${String(mm).padStart(2,'0')}`;
@@ -746,7 +655,6 @@ function renderCommitments(){
 
     row.appendChild(left);
     row.appendChild(right);
-
     list.appendChild(row);
   });
 }
@@ -769,7 +677,6 @@ function addTask() {
   const [h, m] = time.split(":").map(Number);
 
   if (selectedDays.length > 0) {
-    // create template (recurring) task
     const template = {
       id: Date.now(),
       title,
@@ -786,11 +693,9 @@ function addTask() {
       day: new Date().toDateString()
     };
     tasks.push(template);
-    // spawn today's instance immediately if today matches
     spawnRecurringForTemplate(template);
     save();
 
-    // clear inputs
     document.getElementById("taskTitle").value = "";
     document.getElementById("taskTime").value = "";
     document.getElementById("taskDuration").value = "";
@@ -798,7 +703,6 @@ function addTask() {
     return;
   }
 
-  // one-off: schedule for the next occurrence of that time (today/tomorrow)
   const now = new Date();
   const start = new Date();
   start.setHours(h, m, 0, 0);
@@ -822,17 +726,16 @@ function addTask() {
   tasks.push(oneOff);
   save();
 
-  // clear inputs
   document.getElementById("taskTitle").value = "";
   document.getElementById("taskTime").value = "";
   document.getElementById("taskDuration").value = "";
 }
 
-/* ---------- SPAWN RECURRING (weekday-based) ---------- */
+/* ---------- SPAWN RECURRING ---------- */
 
 function spawnRecurring() {
   const now = new Date();
-  const todayIdx = now.getDay(); // 0..6
+  const todayIdx = now.getDay();
 
   const templates = tasks.filter(t => t.template === true);
 
@@ -845,10 +748,8 @@ function spawnRecurring() {
       x.title === t.title &&
       new Date(x.day).toDateString() === new Date().toDateString()
     );
-
     if (exists) return;
 
-    // create today's instance
     const start = new Date();
     let hour = typeof t.startHour !== "undefined" ? t.startHour : new Date(t.start).getHours();
     let minute = typeof t.startMinute !== "undefined" ? t.startMinute : new Date(t.start).getMinutes();
@@ -873,7 +774,6 @@ function spawnRecurring() {
   save();
 }
 
-/* spawn for a single template immediately (used when user creates a template) */
 function spawnRecurringForTemplate(template){
   const now = new Date();
   const todayIdx = now.getDay();
@@ -909,7 +809,7 @@ function spawnRecurringForTemplate(template){
   save();
 }
 
-/* ---------- CHECK OVERDUE & TRIGGER LOCK ---------- */
+/* ---------- CHECK & LOCK ---------- */
 
 function checkTasks() {
   const now = Date.now();
@@ -923,12 +823,12 @@ function checkTasks() {
       const line = getDialogue(t, "missed");
       document.getElementById("lockText").innerText = `${line}\n\n[${t.type}] ${t.title}`;
       document.getElementById("lockScreen").style.display = "flex";
-      break; // show only one lock at a time
+      break;
     }
   }
 }
 
-/* ---------- RESPONSE HANDLERS (store responses) ---------- */
+/* ---------- RESPONSES ---------- */
 
 function respondCompleted() {
   if (!activeTask) return;
@@ -937,133 +837,67 @@ function respondCompleted() {
   closeLock();
   save();
 }
-
-function respondPartial() {
-  if (!activeTask) return;
-  activeTask.response = "partial";
-  closeLock();
-  save();
-}
-
+function respondPartial() { if(!activeTask) return; activeTask.response="partial"; closeLock(); save(); }
 function respondAvoided() {
-  if (!activeTask) return;
-  activeTask.response = "avoided";
-  activeTask.avoids = (activeTask.avoids || 0) + 1;
-  if (activeTask.avoids >= 2) {
-    activeTask.escalation = (activeTask.escalation || 0) + 1;
-  } else {
-    activeTask.start = Date.now() + 15*60000;
-    activeTask.lastPrompt = 0;
-  }
-  closeLock();
-  save();
+  if(!activeTask) return;
+  activeTask.response="avoided";
+  activeTask.avoids=(activeTask.avoids||0)+1;
+  if(activeTask.avoids>=2) activeTask.escalation=(activeTask.escalation||0)+1;
+  else { activeTask.start = Date.now() + 15*60000; activeTask.lastPrompt = 0; }
+  closeLock(); save();
 }
+function respondOverwhelmed(){ if(!activeTask) return; activeTask.response="overwhelmed"; activeTask.start = Date.now()+30*60000; activeTask.lastPrompt=0; closeLock(); save(); }
+function respondReschedule(){ if(!activeTask) return; activeTask.response="rescheduled"; activeTask.start = Date.now()+30*60000; activeTask.lastPrompt=0; closeLock(); save(); }
+function closeLock(){ document.getElementById("lockScreen").style.display="none"; }
 
-function respondOverwhelmed() {
-  if (!activeTask) return;
-  activeTask.response = "overwhelmed";
-  activeTask.start = Date.now() + 30*60000;
-  activeTask.lastPrompt = 0;
-  closeLock();
-  save();
-}
-
-function respondReschedule() {
-  if (!activeTask) return;
-  activeTask.response = "rescheduled";
-  activeTask.start = Date.now() + 30*60000;
-  activeTask.lastPrompt = 0;
-  closeLock();
-  save();
-}
-
-function closeLock() {
-  document.getElementById("lockScreen").style.display = "none";
-}
-
-/* ---------- EDIT / DELETE TEMPLATE UI ---------- */
+/* ---------- EDIT/DELETE TEMPLATES ---------- */
 
 function openEditModal(id){
   const template = tasks.find(t=>t.id===id && t.template);
   if(!template) return alert("Template not found.");
-
   editingTemplateId = id;
-
-  // populate fields
   document.getElementById("editTitle").value = template.title || "";
   const hh = typeof template.startHour !== "undefined" ? String(template.startHour).padStart(2,'0') : new Date(template.start || Date.now()).getHours();
   const mm = typeof template.startMinute !== "undefined" ? String(template.startMinute).padStart(2,'0') : new Date(template.start || Date.now()).getMinutes();
   document.getElementById("editTime").value = `${hh}:${String(mm).padStart(2,'0')}`;
   document.getElementById("editDuration").value = template.duration || 10;
   document.getElementById("editType").value = template.type || "general";
-
-  // clear edit day grid active states then set per template.days
   document.querySelectorAll("#editDayGrid .dayBtn").forEach(b=>b.classList.remove("active"));
   (template.days || []).forEach(d=>{
     const btn = document.querySelector(`#editDayGrid .dayBtn[data-day='${d}']`);
     if(btn) btn.classList.add("active");
   });
-
   document.getElementById("editPanel").style.display = "block";
 }
-
-function closeEdit(){
-  editingTemplateId = null;
-  document.getElementById("editPanel").style.display = "none";
-}
-
+function closeEdit(){ editingTemplateId=null; document.getElementById("editPanel").style.display="none"; }
 function saveEdit(){
   if(!editingTemplateId) return;
   const idx = tasks.findIndex(t=>t.id===editingTemplateId && t.template);
   if(idx === -1) return alert("Template not found (save).");
-
   const title = document.getElementById("editTitle").value.trim();
   const time = document.getElementById("editTime").value;
   const duration = parseInt(document.getElementById("editDuration").value,10);
   const type = document.getElementById("editType").value;
   const days = [...document.querySelectorAll("#editDayGrid .dayBtn.active")].map(b=>parseInt(b.dataset.day,10));
-
   if(!title || !time || !duration) return alert("Please provide title, time, duration.");
-
   const [h, m] = time.split(":").map(Number);
-
-  // update template
-  tasks[idx].title = title;
-  tasks[idx].type = type;
-  tasks[idx].startHour = h;
-  tasks[idx].startMinute = m;
-  tasks[idx].duration = duration;
-  tasks[idx].days = days;
-
+  tasks[idx].title = title; tasks[idx].type = type; tasks[idx].startHour = h; tasks[idx].startMinute = m; tasks[idx].duration = duration; tasks[idx].days = days;
   save();
-
-  // spawn today's instance if today's included and not already present
   spawnRecurringForTemplate(tasks[idx]);
-
   closeEdit();
 }
-
 function deleteTemplate(id){
   if(!confirm("Delete this recurring commitment? This will stop it from spawning future instances.")) return;
   tasks = tasks.filter(t => !(t.id===id && t.template));
   save();
 }
+function deleteTemplateFromModal(){ if(!editingTemplateId) return; deleteTemplate(editingTemplateId); closeEdit(); }
 
-function deleteTemplateFromModal(){
-  if(!editingTemplateId) return;
-  deleteTemplate(editingTemplateId);
-  closeEdit();
-}
-
-/* ---------- DAY BAR (today scoring) ---------- */
-
+/* ---------- DAY BAR ---------- */
 function updateDayBar() {
   const today = new Date().toDateString();
   const todayTasks = tasks.filter(t => t.day === today && !t.template);
-  if (todayTasks.length === 0) {
-    document.getElementById("dayBar").style.width = "0%";
-    return;
-  }
+  if (todayTasks.length === 0) { document.getElementById("dayBar").style.width = "0%"; return; }
   let score = 0;
   todayTasks.forEach(t => {
     if (t.response === "completed") score += 1;
@@ -1073,46 +907,21 @@ function updateDayBar() {
   document.getElementById("dayBar").style.width = Math.max(0, percent) + "%";
 }
 
-/* ---------- OPTIONS + DEV / TEST MODE ---------- */
-
+/* ---------- OPTIONS + TEST MODE ---------- */
 let optionsOpen = false;
 const testTask = { title: "TEST TASK (sandbox)", type: "test", escalation: 0 };
-
-/* toggle options panel */
-function toggleOptions(){
-  optionsOpen = !optionsOpen;
-  document.getElementById("optionsPanel").style.display = optionsOpen ? "block" : "none";
-}
-
-/* wire gear button */
+function toggleOptions(){ optionsOpen = !optionsOpen; document.getElementById("optionsPanel").style.display = optionsOpen ? "block" : "none"; }
 document.getElementById("gearButton").addEventListener("click", toggleOptions);
-
-/* test toggle behavior: show/hide dev controls */
 document.addEventListener("change", (e) => {
   if (e.target && e.target.id === "testToggle") {
     document.getElementById("testControls").style.display = e.target.checked ? "block" : "none";
   }
 });
-
-/* sandbox dev functions (do NOT touch real tasks) */
-function devTrigger(){
-  const fake = {...testTask, title: "TEST: " + (testTask.title || "TEST")};
-  activeTask = fake;
-  const line = getDialogue(fake, "missed");
-  document.getElementById("lockText").innerText = `${line}\n\n[${fake.type}] ${fake.title}`;
-  document.getElementById("lockScreen").style.display = "flex";
-}
-function devEscalate(){
-  testTask.escalation = (testTask.escalation || 0) + 1;
-  devTrigger();
-}
-function devReset(){
-  testTask.escalation = 0;
-  alert("Test escalation reset.");
-}
+function devTrigger(){ const fake = {...testTask, title: "TEST: " + (testTask.title || "TEST")}; activeTask = fake; const line = getDialogue(fake, "missed"); document.getElementById("lockText").innerText = `${line}\n\n[${fake.type}] ${fake.title}`; document.getElementById("lockScreen").style.display = "flex"; }
+function devEscalate(){ testTask.escalation = (testTask.escalation || 0) + 1; devTrigger(); }
+function devReset(){ testTask.escalation = 0; alert("Test escalation reset."); }
 
 /* ---------- START: spawn + intervals ---------- */
-
 spawnRecurring();
 setInterval(spawnRecurring, 60 * 60 * 1000); // hourly spawn
 setInterval(checkTasks, 60 * 1000); // check every minute
