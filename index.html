@@ -18,129 +18,130 @@
     --accent2: #ff5252;
     --card-shadow: 0 4px 10px rgba(0,0,0,.05);
     --gear-bg: #ffffff;
+  }
 
-    /* --- dialogue fonts & upgraded modal styles --- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Merienda:wght@400;700&display=swap');
+  /* import fonts near top (outside of :root) */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Merienda:wght@400;700&display=swap');
 
-body {
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-}
+  body {
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
 
-/* stronger overlay + center modal */
-#lockScreen{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.88);
-  backdrop-filter: blur(6px);
-  color:var(--primary-contrast);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:2rem;
-  z-index:9999;
-}
+  /* stronger overlay + center modal */
+  #lockScreen{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.88);
+    backdrop-filter: blur(6px);
+    color:var(--primary-contrast);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:2rem;
+    z-index:9999;
+  }
 
-/* bigger, punchy lockBox */
-#lockBox{
-  width:min(760px, 96vw);
-  max-height:86vh;
-  overflow:hidden;
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-  border-radius:18px;
-  padding:16px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.04);
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
+  /* bigger, punchy lockBox */
+  #lockBox{
+    width:min(760px, 96vw);
+    max-height:86vh;
+    overflow:hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border-radius:18px;
+    padding:16px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.04);
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
 
-/* speaker header */
-#speakerHeader{
-  display:flex;
-  gap:12px;
-  align-items:center;
-  padding:6px 8px;
-}
-.speakerAvatar{
-  width:48px;height:48px;border-radius:999px;
-  background:linear-gradient(135deg,var(--accent1),var(--accent2));
-  display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary-contrast);
-  font-family:"Merienda", "Inter", sans-serif;
-  box-shadow:0 10px 30px rgba(0,0,0,0.25);
-}
-.speakerName{
-  font-family:"Merienda", "Inter", sans-serif;
-  font-weight:700;
-  font-size:1.05rem;
-  color:var(--primary-contrast);
-  text-transform:capitalize;
-}
+  /* speaker header */
+  #speakerHeader{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    padding:6px 8px;
+  }
+  .speakerAvatar{
+    width:48px;height:48px;border-radius:999px;
+    background:linear-gradient(135deg,var(--accent1),var(--accent2));
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary-contrast);
+    font-family:"Merienda", "Inter", sans-serif;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  }
+  .speakerName{
+    font-family:"Merienda", "Inter", sans-serif;
+    font-weight:700;
+    font-size:1.05rem;
+    color:var(--primary-contrast);
+    text-transform:capitalize;
+  }
 
-/* dialogue area */
-#dialogueWrap{ display:flex; flex-direction:column; gap:8px; align-items:stretch; }
-#dialogueLines{
-  background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.00));
-  padding:12px;
-  border-radius:12px;
-  overflow:auto;
-  max-height:54vh;
-  box-shadow: inset 0 -8px 24px rgba(0,0,0,0.06);
-}
+  /* dialogue area */
+  #dialogueWrap{ display:flex; flex-direction:column; gap:8px; align-items:stretch; }
+  #dialogueLines{
+    background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.00));
+    padding:12px;
+    border-radius:12px;
+    overflow:auto;
+    max-height:54vh;
+    box-shadow: inset 0 -8px 24px rgba(0,0,0,0.06);
+  }
 
-/* bubble row */
-.dialogue-row{ display:flex; gap:10px; align-items:flex-end; margin:6px 0; }
-.dialogue-row.npc{ justify-content:flex-start; }
-.dialogue-row.user{ justify-content:flex-end; }
+  /* bubble row */
+  .dialogue-row{ display:flex; gap:10px; align-items:flex-end; margin:6px 0; }
+  .dialogue-row.npc{ justify-content:flex-start; }
+  .dialogue-row.user{ justify-content:flex-end; }
 
-/* bubble styles */
-.dialogue-bubble{
-  max-width:78%;
-  padding:12px 14px;
-  border-radius:14px;
-  line-height:1.3;
-  word-break:break-word;
-  box-shadow:0 8px 18px rgba(0,0,0,0.12);
-  font-size:1rem;
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-}
-.dialogue-bubble.npc{
-  background: linear-gradient(180deg, var(--accent1), var(--accent2));
-  color:var(--primary-contrast);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-bottom-left-radius:4px;
-}
-.dialogue-bubble.user{
-  background: rgba(255,255,255,0.06);
-  color:var(--text);
-  border: 1px solid rgba(0,0,0,0.06);
-  border-bottom-right-radius:4px;
-}
+  /* bubble styles */
+  .dialogue-bubble{
+    max-width:78%;
+    padding:12px 14px;
+    border-radius:14px;
+    line-height:1.3;
+    word-break:break-word;
+    box-shadow:0 8px 18px rgba(0,0,0,0.12);
+    font-size:1rem;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  }
+  .dialogue-bubble.npc{
+    background: linear-gradient(180deg, var(--accent1), var(--accent2));
+    color:var(--primary-contrast);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-bottom-left-radius:4px;
+  }
+  .dialogue-bubble.user{
+    background: rgba(255,255,255,0.06);
+    color:var(--text);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-bottom-right-radius:4px;
+  }
 
-/* meta row under bubbles */
-#dialogTaskMeta{ font-weight:700; color:var(--muted); margin-top:4px; text-align:center; }
+  /* meta row under bubbles */
+  #dialogTaskMeta{ font-weight:700; color:var(--muted); margin-top:4px; text-align:center; }
 
-/* transform old buttons into dialog-style action bubbles */
-#lockButtons{ display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin-top:10px; }
-.dialog-btn{
-  background:transparent;
-  border-radius:12px;
-  padding:10px 12px;
-  border:1px solid rgba(0,0,0,0.06);
-  cursor:pointer;
-  font-weight:600;
-  box-shadow:0 8px 20px rgba(0,0,0,0.08);
-}
-.dialog-btn.primary{ background:var(--primary); color:var(--primary-contrast); border: none; }
-.dialog-btn.danger{ background:#ff6b6b; color:white; border: none; }
-.dialog-btn:active{ transform:translateY(1px); }
+  /* transform old buttons into dialog-style action bubbles */
+  #lockButtons{ display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin-top:10px; }
+  .dialog-btn{
+    background:transparent;
+    border-radius:12px;
+    padding:10px 12px;
+    border:1px solid rgba(0,0,0,0.06);
+    cursor:pointer;
+    font-weight:600;
+    box-shadow:0 8px 20px rgba(0,0,0,0.08);
+  }
+  .dialog-btn.primary{ background:var(--primary); color:var(--primary-contrast); border: none; }
+  .dialog-btn.danger{ background:#ff6b6b; color:white; border: none; }
+  .dialog-btn:active{ transform:translateY(1px); }
 
-/* make cancel less prominent */
-#lockBox .cancelBtn{ background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.06); opacity:0.9; }
+  /* make cancel less prominent */
+  #lockBox .cancelBtn{ background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.06); opacity:0.9; }
 
-
-    /* parameters (mirrors JS defaults) */
+  /* parameters (mirrors JS defaults) */
+  :root{
     --bg-h: 30;
     --bg-s: 24%;
     --bg-l: 95%;
@@ -468,8 +469,6 @@ body {
   </div>
 </div>
 
-
-
 <!-- EDIT PANEL (for templates) -->
 <div id="editPanel">
   <div id="editInner">
@@ -685,8 +684,6 @@ safeSet("tasks", JSON.stringify(tasks));
 
 /* ---------- CHARACTER DIALOGUE ENGINE ---------- */
 
-  /* ---------- Dialogue bubble renderer ---------- */
-
 function appendNpcBubble(text, speakerName){
   const container = document.getElementById('dialogueLines');
   if(!container) return;
@@ -698,7 +695,6 @@ function appendNpcBubble(text, speakerName){
   bubble.className = 'dialogue-bubble npc';
   bubble.innerText = text || '';
 
-  // optional speaker label above bubble for first message in modal
   row.appendChild(bubble);
   container.appendChild(row);
   container.scrollTop = container.scrollHeight;
@@ -719,7 +715,6 @@ function appendUserBubble(text){
   container.appendChild(row);
   container.scrollTop = container.scrollHeight;
 }
-
 
 const dialogue = {
   general: {
@@ -763,8 +758,6 @@ const dialogue = {
     avoided: ["You didn’t cook.","Surviving on vibes again?","You skipped eating properly."]
   }
 };
-
-/* ---------- RANDOM LINE ROUTER ---------- */
 
 function getDialogue(task, result){
   const pack = dialogue[task.type] || dialogue.general;
@@ -1170,8 +1163,8 @@ function setSpeakerName(name){
 // close + restore page scrolling
 function closeLock(){
   document.getElementById("lockScreen").style.display = "none";
-  const continueBtn = document.getElementById("lockContinueBtn");
-  if(continueBtn) continueBtn.style.display = "none";
+  const continueBtnLocal = document.getElementById("lockContinueBtn");
+  if(continueBtnLocal) continueBtnLocal.style.display = "none";
   try { document.body.style.overflow = ''; } catch(e){}
 }
 
@@ -1181,7 +1174,7 @@ function openLockModal(){
   document.getElementById('lockScreen').style.display = 'flex';
   // prevent clicks on overlay from closing or interacting unintentionally
   const lockBox = document.getElementById('lockBox');
-  lockBox.addEventListener('click', e => e.stopPropagation());
+  if(lockBox) lockBox.addEventListener('click', e => e.stopPropagation());
 }
 
 
@@ -1292,7 +1285,6 @@ document.addEventListener('change', (e)=>{
   `;
 })();
 
-/* create and show lock dialog using real routing and make activeTask available to response handlers */
 function devSimulate(result){
   const sel = document.getElementById('devType');
   const type = sel ? sel.value : 'general';
@@ -1330,8 +1322,7 @@ function devReset(){
   alert('Dev escalation reset');
 }
 
-/* ---------- START: spawn + intervals ---------- */
-  /* =========================================================
+/* =========================================================
    RESPONSE LOCK SYSTEM (prevents multi-click cheating)
    ========================================================= */
 
@@ -1355,38 +1346,7 @@ function unlockResponses(){
   });
 }
 
-const continueBtn = document.getElementById("lockContinueBtn");
-if(continueBtn){
-  continueBtn.addEventListener("click", ()=>{
-    closeLock();
-    unlockResponses();
-  });
-}
-
-const continueBtn = document.getElementById("lockContinueBtn");
-if(continueBtn){
-  continueBtn.addEventListener("click", ()=>{
-    closeLock();
-    unlockResponses();
-  });
-}
-
-const continueBtn = document.getElementById("lockContinueBtn");
-if(continueBtn){
-  continueBtn.addEventListener("click", ()=>{
-    closeLock();
-    unlockResponses();
-  });
-}
-
-const continueBtn = document.getElementById("lockContinueBtn");
-if(continueBtn){
-  continueBtn.addEventListener("click", ()=>{
-    closeLock();
-    unlockResponses();
-  });
-}
-
+/* single continue button wiring (fixed — only declared once) */
 const continueBtn = document.getElementById("lockContinueBtn");
 if(continueBtn){
   continueBtn.addEventListener("click", ()=>{
@@ -1444,6 +1404,35 @@ function respondAvoided(){ handleUserResponse('avoided'); }
 function respondOverwhelmed(){ handleUserResponse('overwhelmed'); }
 function respondReschedule(){ handleUserResponse('rescheduled'); }
 
+/* -- Defensive placeholders so the options buttons don't crash -- */
+function exportSettings(){
+  // implement your export logic here; placeholder avoids runtime errors while testing
+  try {
+    const payload = {
+      tasks: tasks,
+      theme: {
+        bgHue: safeGet(STORAGE_PREFIX + 'bgHue'),
+        accentHue: safeGet(STORAGE_PREFIX + 'accentHue')
+      }
+    };
+    alert('Export placeholder — payload size: ' + JSON.stringify(payload).length + ' bytes');
+  } catch(e){
+    console.warn('exportSettings placeholder failed', e);
+  }
+}
+function importSettingsPrompt(){
+  // simple placeholder to avoid runtime errors while testing
+  const json = prompt('Paste settings JSON to import (placeholder):');
+  if(!json) return;
+  try{
+    const obj = JSON.parse(json);
+    alert('Import placeholder: parsed object keys — ' + Object.keys(obj).join(', '));
+  }catch(e){
+    alert('Invalid JSON');
+  }
+}
+
+/* ---------- START: spawn + intervals ---------- */
 spawnRecurring();
 setInterval(spawnRecurring, 60 * 60 * 1000); // hourly spawn
 setInterval(checkTasks, 60 * 1000); // check every minute
@@ -1455,7 +1444,4 @@ updateDayBar();
 
 </body>
 </html>
-
-
-
 
