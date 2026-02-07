@@ -664,13 +664,9 @@ function safeGet(key){
 function safeSet(key, value){
   try { localStorage.setItem(key, value); } catch(e){ memoryStorage[key] = String(value); }
 }
-function safeJsonParse(value, fallback){
-  if(value === null || typeof value === "undefined") return fallback;
-  try { return JSON.parse(value); } catch(e){ return fallback; }
-}
 
 // Load tasks and normalize older entries
-let tasks = safeJsonParse(safeGet("tasks"), []);
+let tasks = JSON.parse(safeGet("tasks") || "[]");
 
 // Normalization: keep items which have duration; convert legacy shapes gently
 tasks = (tasks || []).map(t => {
@@ -1142,7 +1138,7 @@ function checkTasks() {
       document.getElementById('dialogTaskMeta').innerText =
         `[${t.type}] ${t.title}`;
 
-      openLockModal();
+      document.getElementById('lockScreen').style.display = 'flex';
       break;
     }
   }
@@ -1356,6 +1352,38 @@ function unlockResponses(){
     btn.disabled = false;
     btn.style.opacity = 1;
     btn.style.cursor = 'pointer';
+  });
+}
+
+const continueBtn = document.getElementById("lockContinueBtn");
+if(continueBtn){
+  continueBtn.addEventListener("click", ()=>{
+    closeLock();
+    unlockResponses();
+  });
+}
+
+const continueBtn = document.getElementById("lockContinueBtn");
+if(continueBtn){
+  continueBtn.addEventListener("click", ()=>{
+    closeLock();
+    unlockResponses();
+  });
+}
+
+const continueBtn = document.getElementById("lockContinueBtn");
+if(continueBtn){
+  continueBtn.addEventListener("click", ()=>{
+    closeLock();
+    unlockResponses();
+  });
+}
+
+const continueBtn = document.getElementById("lockContinueBtn");
+if(continueBtn){
+  continueBtn.addEventListener("click", ()=>{
+    closeLock();
+    unlockResponses();
   });
 }
 
