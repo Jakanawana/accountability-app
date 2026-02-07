@@ -670,8 +670,17 @@ body {
 <script>
 /* ---------- BOOTSTRAP & NORMALIZE ---------- */
 
+// Storage helpers (avoid crashing if localStorage is unavailable)
+const memoryStorage = {};
+function safeGet(key){
+  try { return localStorage.getItem(key); } catch(e){ return Object.prototype.hasOwnProperty.call(memoryStorage, key) ? memoryStorage[key] : null; }
+}
+function safeSet(key, value){
+  try { localStorage.setItem(key, value); } catch(e){ memoryStorage[key] = String(value); }
+}
+
 // Load tasks and normalize older entries
-let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+let tasks = JSON.parse(safeGet("tasks") || "[]");
 
 // Normalization: keep items which have duration; convert legacy shapes gently
 tasks = (tasks || []).map(t => {
@@ -686,7 +695,7 @@ tasks = (tasks || []).map(t => {
   return t;
 }).filter(Boolean);
 
-localStorage.setItem("tasks", JSON.stringify(tasks));
+safeSet("tasks", JSON.stringify(tasks));
 
 /* ---------- CHARACTER DIALOGUE ENGINE ---------- */
 
@@ -804,7 +813,7 @@ const defaults = {
 };
 
 function savedOrDefault(key){
-  const val = localStorage.getItem(STORAGE_PREFIX + key);
+  const val = safeGet(STORAGE_PREFIX + key);
   return val === null ? defaults[key] : (isNaN(val) ? val : Number(val));
 }
 
@@ -817,7 +826,7 @@ function applyTextColor(value){
     document.documentElement.style.setProperty('--text', '#222222');
     document.documentElement.style.setProperty('--muted', '#666666');
   }
-  try{ localStorage.setItem(STORAGE_PREFIX + 'textColor', value); }catch(e){}
+  safeSet(STORAGE_PREFIX + 'textColor', value);
   const b = document.getElementById('textBlack');
   const w = document.getElementById('textWhite');
   if(b) b.checked = (value !== 'white');
@@ -868,7 +877,7 @@ function applyCustomStylesFromStorage(){
 }
 
 function saveCustom(key, value){
-  localStorage.setItem(STORAGE_PREFIX + key, String(value));
+  safeSet(STORAGE_PREFIX + key, String(value));
   applyCustomStylesFromStorage();
 }
 
@@ -891,12 +900,12 @@ if(rb) rb.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor(
 if(rw) rw.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor('white'); });
 
 applyCustomStylesFromStorage();
-applyTextColor(localStorage.getItem(STORAGE_PREFIX + 'textColor') || defaults.textColor);
+applyTextColor(safeGet(STORAGE_PREFIX + 'textColor') || defaults.textColor);
 
 /* ---------- SAVE / RENDER / HELPERS (task UI) ---------- */
 
 function save() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
+  safeSet("tasks", JSON.stringify(tasks));
   render();
   updateDayBar();
 }
@@ -1390,6 +1399,14 @@ if(continueBtn){
   });
 }
 
+const continueBtn = document.getElementById("lockContinueBtn");
+if(continueBtn){
+  continueBtn.addEventListener("click", ()=>{
+    closeLock();
+    unlockResponses();
+  });
+}
+
 /* Override your existing handler safely */
 
 function handleUserResponse(resultKey){
@@ -1417,13 +1434,6 @@ function handleUserResponse(resultKey){
       continueBtn.style.display = "block";
     }
   }, 300);
-  setTimeout(()=>{
-    const reply = getDialogue(activeTask, resultKey);
-    appendNpcBubble(reply);
-    if(continueBtn){
-      continueBtn.style.display = "block";
-    }
-  }, 300);
 
   // store result
   activeTask.response = resultKey;
@@ -1435,8 +1445,6 @@ function handleUserResponse(resultKey){
   save();
   updateDayBar();
 
-  // wait for user confirmation before closing
-}
   // wait for user confirmation before closing
 }
 
