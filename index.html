@@ -455,15 +455,19 @@ body {
     </div>
 
     <!-- response buttons (also clickable bubbles via JS) -->
-   <div id="lockButtons" style="margin-top:1rem;">
-  <button class="dialog-btn primary" onclick="respondCompleted()">I did it</button>
-  <button class="dialog-btn" onclick="respondPartial()">I started</button>
-  <button class="dialog-btn" onclick="respondAvoided()">I avoided it</button>
-  <button class="dialog-btn" onclick="respondOverwhelmed()">I was overwhelmed</button>
-  <button class="dialog-btn" onclick="respondReschedule()">Reschedule</button>
+    <div id="lockButtons" style="margin-top:1rem;">
+      <button class="dialog-btn primary" onclick="respondCompleted()">I did it</button>
+      <button class="dialog-btn" onclick="respondPartial()">I started</button>
+      <button class="dialog-btn" onclick="respondAvoided()">I avoided it</button>
+      <button class="dialog-btn" onclick="respondOverwhelmed()">I was overwhelmed</button>
+      <button class="dialog-btn" onclick="respondReschedule()">Reschedule</button>
+    </div>
+    <button id="lockContinueBtn" class="dialog-btn primary" style="display:none;margin-top:0.75rem;">
+      Got it
+    </button>
+  </div>
 </div>
 
-  
 
 
 <!-- EDIT PANEL (for templates) -->
@@ -652,8 +656,21 @@ body {
 <script>
 /* ---------- BOOTSTRAP & NORMALIZE ---------- */
 
+// Storage helpers (avoid crashing if localStorage is unavailable)
+const memoryStorage = {};
+function safeGet(key){
+  try { return localStorage.getItem(key); } catch(e){ return Object.prototype.hasOwnProperty.call(memoryStorage, key) ? memoryStorage[key] : null; }
+}
+function safeSet(key, value){
+  try { localStorage.setItem(key, value); } catch(e){ memoryStorage[key] = String(value); }
+}
+function safeJsonParse(value, fallback){
+  if(value === null || typeof value === "undefined") return fallback;
+  try { return JSON.parse(value); } catch(e){ return fallback; }
+}
+
 // Load tasks and normalize older entries
-let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+let tasks = safeJsonParse(safeGet("tasks"), []);
 
 // Normalization: keep items which have duration; convert legacy shapes gently
 tasks = (tasks || []).map(t => {
@@ -668,7 +685,7 @@ tasks = (tasks || []).map(t => {
   return t;
 }).filter(Boolean);
 
-localStorage.setItem("tasks", JSON.stringify(tasks));
+safeSet("tasks", JSON.stringify(tasks));
 
 /* ---------- CHARACTER DIALOGUE ENGINE ---------- */
 
@@ -786,7 +803,7 @@ const defaults = {
 };
 
 function savedOrDefault(key){
-  const val = localStorage.getItem(STORAGE_PREFIX + key);
+  const val = safeGet(STORAGE_PREFIX + key);
   return val === null ? defaults[key] : (isNaN(val) ? val : Number(val));
 }
 
@@ -799,7 +816,7 @@ function applyTextColor(value){
     document.documentElement.style.setProperty('--text', '#222222');
     document.documentElement.style.setProperty('--muted', '#666666');
   }
-  try{ localStorage.setItem(STORAGE_PREFIX + 'textColor', value); }catch(e){}
+  safeSet(STORAGE_PREFIX + 'textColor', value);
   const b = document.getElementById('textBlack');
   const w = document.getElementById('textWhite');
   if(b) b.checked = (value !== 'white');
@@ -850,7 +867,7 @@ function applyCustomStylesFromStorage(){
 }
 
 function saveCustom(key, value){
-  localStorage.setItem(STORAGE_PREFIX + key, String(value));
+  safeSet(STORAGE_PREFIX + key, String(value));
   applyCustomStylesFromStorage();
 }
 
@@ -873,12 +890,12 @@ if(rb) rb.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor(
 if(rw) rw.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor('white'); });
 
 applyCustomStylesFromStorage();
-applyTextColor(localStorage.getItem(STORAGE_PREFIX + 'textColor') || defaults.textColor);
+applyTextColor(safeGet(STORAGE_PREFIX + 'textColor') || defaults.textColor);
 
 /* ---------- SAVE / RENDER / HELPERS (task UI) ---------- */
 
 function save() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
+  safeSet("tasks", JSON.stringify(tasks));
   render();
   updateDayBar();
 }
@@ -1120,75 +1137,15 @@ function checkTasks() {
       const line = getDialogue(t, "avoided");
       document.getElementById('dialogueLines').innerHTML = '';
 
-appendNpcBubble(line);
+      appendNpcBubble(line);
 
-document.getElementById('dialogTaskMeta').innerText =
-  `[${t.type}] ${t.title}`;
+      document.getElementById('dialogTaskMeta').innerText =
+        `[${t.type}] ${t.title}`;
 
-document.getElementById('lockScreen').style.display = 'flex';
-
-      document.getElementById("lockScreen").style.display = "flex";
+      openLockModal();
       break;
     }
   }
-}
-
-/* ---------- RESPONSES ---------- */
-
-/* ---------- RESPONSE HANDLER (conversation version) ---------- */
-
-function handleUserResponse(resultKey){
-  if(!activeTask) return;
-
-  const labelMap = {
-    completed: "I did it",
-    partial: "I started",
-    avoided: "I avoided it",
-    overwhelmed: "I was overwhelmed",
-    rescheduled: "Reschedule"
-  };
-
-  // 1️⃣ show user bubble
-  appendUserBubble(labelMap[resultKey] || resultKey);
-
-  // 2️⃣ NPC reply
-  setTimeout(()=>{
-    const reply = getDialogue(activeTask, resultKey);
-    appendNpcBubble(reply);
-  }, 300);
-
-  // 3️⃣ update task state
-  if(resultKey === 'completed'){
-    activeTask.response = 'completed';
-    activeTask.done = true;
-  } else {
-    activeTask.response = resultKey;
-  }
-
-  save?.();
-}
-
-
-/* ---------- Button wrappers ---------- */
-
-function respondCompleted(){
-  handleUserResponse('completed');
-}
-
-function respondPartial(){
-  handleUserResponse('partial');
-}
-
-function respondAvoided(){
-  handleUserResponse('avoided');
-}
-
-function respondOverwhelmed(){
-  handleUserResponse('overwhelmed');
-}
-
-function respondReschedule(){
-  handleUserResponse('rescheduled');
 }
 
 // sets header speaker (call before showing modal)
@@ -1217,6 +1174,8 @@ function setSpeakerName(name){
 // close + restore page scrolling
 function closeLock(){
   document.getElementById("lockScreen").style.display = "none";
+  const continueBtn = document.getElementById("lockContinueBtn");
+  if(continueBtn) continueBtn.style.display = "none";
   try { document.body.style.overflow = ''; } catch(e){}
 }
 
@@ -1400,6 +1359,14 @@ function unlockResponses(){
   });
 }
 
+const continueBtn = document.getElementById("lockContinueBtn");
+if(continueBtn){
+  continueBtn.addEventListener("click", ()=>{
+    closeLock();
+    unlockResponses();
+  });
+}
+
 /* Override your existing handler safely */
 
 function handleUserResponse(resultKey){
@@ -1423,6 +1390,9 @@ function handleUserResponse(resultKey){
   setTimeout(()=>{
     const reply = getDialogue(activeTask, resultKey);
     appendNpcBubble(reply);
+    if(continueBtn){
+      continueBtn.style.display = "block";
+    }
   }, 300);
 
   // store result
@@ -1435,11 +1405,7 @@ function handleUserResponse(resultKey){
   save();
   updateDayBar();
 
-  // close modal after reply
-  setTimeout(()=>{
-    closeLock();
-    unlockResponses();
-  }, 900);
+  // wait for user confirmation before closing
 }
 
 /* Button wrappers */
