@@ -326,7 +326,7 @@
   <div id="lockBox">
     <h2 id="lockText"></h2>
 
-    <div style="margin-top:1rem;">
+    <div id="lockButtons" style="margin-top:1rem;">
       <button onclick="respondCompleted()">I did it</button>
       <button onclick="respondPartial()">I started</button>
       <button onclick="respondAvoided()">I avoided it</button>
@@ -411,11 +411,7 @@
 
         <div id="testControls" style="display:none;">
           <div style="margin-bottom:8px;color:var(--muted)">Sandbox dev controls — won't modify real templates.</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <button class="smallBtn" onclick="devTrigger()">Trigger test lock</button>
-            <button class="smallBtn" onclick="devEscalate()">Escalate test lock</button>
-            <button class="smallBtn" onclick="devReset()">Reset test escalation</button>
-          </div>
+          <div id="testControlsInner" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
       </div>
 
@@ -548,211 +544,59 @@ tasks = (tasks || []).map(t => {
 
 localStorage.setItem("tasks", JSON.stringify(tasks));
 
-/* ---------- PACK ENGINE (placeholder content) ---------- */
-
 /* ---------- CHARACTER DIALOGUE ENGINE ---------- */
 
 const dialogue = {
-
-  /* ========== GENERAL FALLBACK ========== */
-
   general: {
-
-    completed: [
-      "You did it. I’m impressed.",
-      "Task done. Good.",
-      "You followed through — proud of you."
-    ],
-
-    partial: [
-      "You started. That counts… barely.",
-      "Half effort is still effort.",
-      "You touched the task. Growth."
-    ],
-
-    avoided: [
-      "You avoided it.",
-      "You said you would — you didn’t.",
-      "Avoidance again. Pattern forming."
-    ]
+    completed: ["You did it. I’m impressed.","Task done. Good.","You followed through — proud of you."],
+    partial: ["You started. That counts… barely.","Half effort is still effort.","You touched the task. Growth."],
+    avoided: ["You avoided it.","You said you would — you didn’t.","Avoidance again. Pattern forming."]
   },
-
-  /* ========== WAKE UP ========== */
-
   wake: {
-
-    completed: [
-      "Oh? Up on time.",
-      "You beat the bed. Proud.",
-      "Good boy. Morning win."
-    ],
-
-    partial: [
-      "Eventually conscious.",
-      "Late — but alive.",
-      "You crawled out. Counts."
-    ],
-
-    avoided: [
-      "You lost to your bed.",
-      "Alarm rang. You ignored it.",
-      "Sleep won again."
-    ]
+    completed: ["Oh? Up on time.","You beat the bed. Proud.","Good boy. Morning win."],
+    partial: ["Eventually conscious.","Late — but alive.","You crawled out. Counts."],
+    avoided: ["You lost to your bed.","Alarm rang. You ignored it.","Sleep won again."]
   },
-
-  /* ========== SHOWER ========== */
-
   shower: {
-
-    completed: [
-      "Clean. Civilised. Stunning.",
-      "You smell less like depression nest.",
-      "Proud of you for basic hygiene."
-    ],
-
-    partial: [
-      "Half shower?",
-      "Speedrun hygiene I see.",
-      "You rinsed. Bare minimum."
-    ],
-
-    avoided: [
-      "Skipped showering.",
-      "Avoiding hygiene now?",
-      "You just didn’t wash."
-    ]
+    completed: ["Clean. Civilised. Stunning.","You smell less like depression nest.","Proud of you for basic hygiene."],
+    partial: ["Half shower?","Speedrun hygiene I see.","You rinsed. Bare minimum."],
+    avoided: ["Skipped showering.","Avoiding hygiene now?","You just didn’t wash."]
   },
-
-  /* ========== FACECARE ========== */
-
   facecare: {
-
-    completed: [
-      "Skin routine done. Glow up era.",
-      "Taking care of your face — love that.",
-      "Cute and moisturised."
-    ],
-
-    partial: [
-      "Half routine.",
-      "You tried. I guess.",
-      "Better than nothing."
-    ],
-
-    avoided: [
-      "Skipped face care.",
-      "You forgot again?",
-      "Your skin is judging you."
-    ]
+    completed: ["Skin routine done. Glow up era.","Taking care of your face — love that.","Cute and moisturised."],
+    partial: ["Half routine.","You tried. I guess.","Better than nothing."],
+    avoided: ["Skipped face care.","You forgot again?","Your skin is judging you."]
   },
-
-  /* ========== EXERCISE ========== */
-
   exercise: {
-
-    completed: [
-      "Worked out. Hot.",
-      "Body maintenance complete.",
-      "Proud of you, Jak."
-    ],
-
-    partial: [
-      "Half workout.",
-      "You started at least.",
-      "Baby steps."
-    ],
-
-    avoided: [
-      "You dodged exercise.",
-      "Avoiding movement again?",
-      "Body’s not gonna train itself."
-    ]
+    completed: ["Worked out. Hot.","Body maintenance complete.","Proud of you, Jak."],
+    partial: ["Half workout.","You started at least.","Baby steps."],
+    avoided: ["You dodged exercise.","Avoiding movement again?","Body’s not gonna train itself."]
   },
-
-  /* ========== MUSIC ========== */
-
   music: {
-
-    completed: [
-      "You made music today. Love that.",
-      "Creative and disciplined.",
-      "Proud of you, Jak."
-    ],
-
-    partial: [
-      "You opened the project.",
-      "You poked at it.",
-      "Creative warmup."
-    ],
-
-    avoided: [
-      "You avoided music work.",
-      "Scared of your own talent?",
-      "Creative avoidance."
-    ]
+    completed: ["You made music today. Love that.","Creative and disciplined.","Proud of you, Jak."],
+    partial: ["You opened the project.","You poked at it.","Creative warmup."],
+    avoided: ["You avoided music work.","Scared of your own talent?","Creative avoidance."]
   },
-
-  /* ========== ART ========== */
-
   art: {
-
-    completed: [
-      "You made art. Cute.",
-      "Creative brain engaged.",
-      "Proud of you."
-    ],
-
-    partial: [
-      "You sketched a bit.",
-      "You tried.",
-      "Warmup counts."
-    ],
-
-    avoided: [
-      "You avoided art.",
-      "Creative block?",
-      "You didn’t even start."
-    ]
+    completed: ["You made art. Cute.","Creative brain engaged.","Proud of you."],
+    partial: ["You sketched a bit.","You tried.","Warmup counts."],
+    avoided: ["You avoided art.","Creative block?","You didn’t even start."]
   },
-
-  /* ========== COOKING ========== */
-
   cooking: {
-
-    completed: [
-      "You fed yourself. Good.",
-      "Sustained life successfully.",
-      "I like when you eat properly."
-    ],
-
-    partial: [
-      "Snack dinner?",
-      "Half effort meal.",
-      "Nutrition… adjacent."
-    ],
-
-    avoided: [
-      "You didn’t cook.",
-      "Surviving on vibes again?",
-      "You skipped eating properly."
-    ]
+    completed: ["You fed yourself. Good.","Sustained life successfully.","I like when you eat properly."],
+    partial: ["Snack dinner?","Half effort meal.","Nutrition… adjacent."],
+    avoided: ["You didn’t cook.","Surviving on vibes again?","You skipped eating properly."]
   }
-
 };
 
 /* ---------- RANDOM LINE ROUTER ---------- */
 
 function getDialogue(task, result){
-
   const pack = dialogue[task.type] || dialogue.general;
-  if(!pack) return task.title;
-
   const pool = pack[result];
-  if(!pool || pool.length === 0) return task.title;
-
+  if(!pool || pool.length === 0) return task.title || "";
   return pool[Math.floor(Math.random() * pool.length)];
 }
-
 
 /* ---------- STATE ---------- */
 
@@ -775,14 +619,8 @@ wireDayGrid("#editDayGrid");
 
 const STORAGE_PREFIX = "showup_custom_";
 const defaults = {
-  bgHue: 30,
-  bgSat: 24,
-  bgLight: 95,
-  panelLight: 100,
-  accentHue: 145,
-  accentSat: 80,
-  accentLight: 52,
-  textColor: 'black'
+  bgHue: 30, bgSat: 24, bgLight: 95, panelLight: 100,
+  accentHue: 145, accentSat: 80, accentLight: 52, textColor: 'black'
 };
 
 function savedOrDefault(key){
@@ -799,9 +637,7 @@ function applyTextColor(value){
     document.documentElement.style.setProperty('--text', '#222222');
     document.documentElement.style.setProperty('--muted', '#666666');
   }
-  // persist
   try{ localStorage.setItem(STORAGE_PREFIX + 'textColor', value); }catch(e){}
-  // sync radios
   const b = document.getElementById('textBlack');
   const w = document.getElementById('textWhite');
   if(b) b.checked = (value !== 'white');
@@ -817,7 +653,6 @@ function applyCustomStylesFromStorage(){
   const accentSat = savedOrDefault('accentSat');
   const accentLight = savedOrDefault('accentLight');
 
-  // set CSS custom properties
   document.documentElement.style.setProperty('--bg-h', String(bgHue));
   document.documentElement.style.setProperty('--bg-s', String(bgSat) + '%');
   document.documentElement.style.setProperty('--bg-l', String(bgLight) + '%');
@@ -827,7 +662,6 @@ function applyCustomStylesFromStorage(){
   document.documentElement.style.setProperty('--accent-s', String(accentSat) + '%');
   document.documentElement.style.setProperty('--accent-l', String(accentLight) + '%');
 
-  // update visible slider labels & inputs
   const map = [
     ['bgHue','bgHueVal', bgHue, v => v],
     ['bgSat','bgSatVal', bgSat, v => v + '%'],
@@ -844,7 +678,6 @@ function applyCustomStylesFromStorage(){
     if(l) l.innerText = fmt(val);
   });
 
-  // update dayBar gradient live
   const a1 = `hsl(${accentHue} ${accentSat}% ${accentLight}%)`;
   const a2 = `hsl(${(accentHue + 30)%360} ${accentSat}% ${accentLight}%)`;
   document.documentElement.style.setProperty('--accent1', a1);
@@ -854,19 +687,16 @@ function applyCustomStylesFromStorage(){
   if(dayBar) dayBar.style.background = `linear-gradient(90deg, ${a1}, ${a2})`;
 }
 
-// save a single slider value
 function saveCustom(key, value){
   localStorage.setItem(STORAGE_PREFIX + key, String(value));
   applyCustomStylesFromStorage();
 }
 
-// wire slider inputs to save+apply
 ['bgHue','bgSat','bgLight','panelLight','accentHue','accentSat','accentLight'].forEach(id=>{
   const el = document.getElementById(id);
   if(!el) return;
   el.addEventListener('input', (e)=>{
     const v = Number(e.target.value);
-    // update label
     const label = document.getElementById(id + 'Val');
     if(label){
       label.innerText = id.toLowerCase().includes('hue') ? String(v) : (String(v) + (id.toLowerCase().includes('hue') ? '' : '%'));
@@ -875,78 +705,11 @@ function saveCustom(key, value){
   });
 });
 
-// text color radios
 const rb = document.getElementById('textBlack');
 const rw = document.getElementById('textWhite');
 if(rb) rb.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor('black'); });
 if(rw) rw.addEventListener('change', (e)=>{ if(e.target.checked) applyTextColor('white'); });
 
-// show/hide dev controls when checkbox is toggled
-document.addEventListener('change', (e) => {
-  if (e.target && e.target.id === 'testToggle') {
-    document.getElementById('testControls').style.display = e.target.checked ? 'block' : 'none';
-  }
-});
-
-// reset button
-const resetBtn = document.getElementById('resetCustom');
-if(resetBtn){
-  resetBtn.addEventListener('click', ()=>{
-    ['bgHue','bgSat','bgLight','panelLight','accentHue','accentSat','accentLight','textColor'].forEach(k=>{
-      localStorage.removeItem(STORAGE_PREFIX + k);
-    });
-    applyCustomStylesFromStorage();
-    applyTextColor(defaults.textColor);
-  });
-}
-
-// export / import helpers
-function exportSettings(){
-  const keys = ['bgHue','bgSat','bgLight','panelLight','accentHue','accentSat','accentLight','textColor'];
-  const out = {};
-  keys.forEach(k=>{
-    const v = localStorage.getItem(STORAGE_PREFIX + k);
-    if(v !== null) out[k] = v;
-  });
-  const data = JSON.stringify(out, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'showup-colors.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function importSettingsPrompt(){
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'application/json';
-  input.onchange = (ev) => {
-    const f = ev.target.files[0];
-    if(!f) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try{
-        const obj = JSON.parse(reader.result);
-        Object.keys(obj).forEach(k=>{
-          localStorage.setItem(STORAGE_PREFIX + k, String(obj[k]));
-        });
-        applyCustomStylesFromStorage();
-        applyTextColor(localStorage.getItem(STORAGE_PREFIX + 'textColor') || defaults.textColor);
-        alert('Imported settings.');
-      }catch(err){
-        alert('Invalid file.');
-      }
-    };
-    reader.readAsText(f);
-  };
-  input.click();
-}
-
-/* ---------- apply on load ---------- */
 applyCustomStylesFromStorage();
 applyTextColor(localStorage.getItem(STORAGE_PREFIX + 'textColor') || defaults.textColor);
 
@@ -1279,134 +1042,85 @@ function updateDayBar() {
   document.getElementById("dayBar").style.width = Math.max(0, percent) + "%";
 }
 
-/* ---------- OPTIONS + TEST MODE ---------- */
-/* ---------- OPTIONS + DEV MODE (ALARM SIMULATOR) ---------- */
+/* ---------- DEV MODE (ALARM SIMULATOR) ---------- */
 
+/* single optionsOpen var and toggle */
 let optionsOpen = false;
+function toggleOptions(){ optionsOpen = !optionsOpen; document.getElementById("optionsPanel").style.display = optionsOpen ? "block" : "none"; }
+document.getElementById("gearButton").addEventListener("click", toggleOptions);
 
-function toggleOptions(){
-  optionsOpen = !optionsOpen;
-  document.getElementById("optionsPanel").style.display =
-    optionsOpen ? "block" : "none";
-}
-
-document
-  .getElementById("gearButton")
-  .addEventListener("click", toggleOptions);
-
-
-/* ---------- DEV MODE STATE ---------- */
-
+/* dev escalation state */
 let devEscalation = 0;
 
-
-/* ---------- SHOW / HIDE DEV CONTROLS ---------- */
-
-document.addEventListener("change", (e) => {
-
-  if (e.target && e.target.id === "testToggle") {
-
-    document.getElementById("testControls").style.display =
-      e.target.checked ? "block" : "none";
-
+/* show/hide testControls area when checkbox changes */
+document.addEventListener('change', (e)=>{
+  if (e.target && e.target.id === 'testToggle') {
+    document.getElementById('testControls').style.display = e.target.checked ? 'block' : 'none';
   }
-
 });
 
+/* inject dev UI (task type selector + simulate buttons) into the testControlsInner container */
+(function injectDevUI(){
+  const container = document.getElementById('testControlsInner');
+  if(!container) return;
 
-/* ---------- DEV MODE UI INJECT ---------- */
+  container.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <label style="font-size:.9rem">Select task type to simulate:</label>
+      <select id="devType" style="padding:.5rem;border-radius:8px;">
+        <option value="wake">Wake up</option>
+        <option value="shower">Shower</option>
+        <option value="facecare">Facecare</option>
+        <option value="exercise">Exercise</option>
+        <option value="music">Music</option>
+        <option value="art">Art</option>
+        <option value="cooking">Cooking</option>
+        <option value="general">General</option>
+      </select>
 
-const devControlsHTML = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="smallBtn" onclick="devSimulate('avoided')">Simulate Missed Alarm</button>
+        <button class="smallBtn" onclick="devSimulate('partial')">Simulate Partial</button>
+        <button class="smallBtn" onclick="devSimulate('completed')">Simulate Completed</button>
+      </div>
 
-<div style="margin-top:10px">
+      <div style="display:flex;gap:8px;">
+        <button class="smallBtn" onclick="devEscalate()">Escalate Tone</button>
+        <button class="smallBtn" onclick="devReset()">Reset Escalation</button>
+      </div>
+    </div>
+  `;
+})();
 
-<select id="devType">
-  <option value="wake">Wake up</option>
-  <option value="shower">Shower</option>
-  <option value="facecare">Facecare</option>
-  <option value="exercise">Exercise</option>
-  <option value="music">Music</option>
-  <option value="art">Art</option>
-  <option value="cooking">Cooking</option>
-  <option value="general">General</option>
-</select>
-
-<button class="smallBtn" onclick="devSimulate('avoided')">
-Simulate Missed Alarm
-</button>
-
-<button class="smallBtn" onclick="devSimulate('partial')">
-Simulate Partial
-</button>
-
-<button class="smallBtn" onclick="devSimulate('completed')">
-Simulate Completed
-</button>
-
-<button class="smallBtn" onclick="devEscalate()">
-Escalate Tone
-</button>
-
-<button class="smallBtn" onclick="devReset()">
-Reset Escalation
-</button>
-
-</div>
-`;
-
-document.getElementById("testControls").innerHTML = devControlsHTML;
-
-
-/* ---------- DEV SIMULATION ---------- */
-
+/* create and show lock dialog using real routing and make activeTask available to response handlers */
 function devSimulate(result){
-
-  const type =
-    document.getElementById("devType").value;
+  const sel = document.getElementById('devType');
+  const type = sel ? sel.value : 'general';
 
   const fakeTask = {
-
-    id: "dev",
-    title: "DEV TEST TASK",
+    id: 'dev-' + Date.now(),
+    title: 'DEV TEST TASK',
     type: type,
     escalation: devEscalation,
     duration: 10
-
   };
 
   activeTask = fakeTask;
 
-  const line =
-    getDialogue(fakeTask, result);
+  const line = getDialogue(fakeTask, result);
 
-  document.getElementById("lockText").innerText =
-    `${line}\n\n[${type}] Dev Simulation`;
-
-  document.getElementById("lockScreen").style.display =
-    "flex";
+  document.getElementById('lockText').innerText = `${line}\n\n[${type}] Dev Simulation`;
+  document.getElementById('lockScreen').style.display = 'flex';
 }
 
-
-/* ---------- DEV ESCALATION ---------- */
-
+/* escalate / reset */
 function devEscalate(){
-
   devEscalation++;
-
-  alert(
-    "Escalation level: " +
-    devEscalation
-  );
-
+  alert('Dev escalation level: ' + devEscalation);
 }
-
-
 function devReset(){
-
   devEscalation = 0;
-
-  alert("Escalation reset.");
-
+  alert('Dev escalation reset');
 }
 
 /* ---------- START: spawn + intervals ---------- */
@@ -1421,5 +1135,3 @@ updateDayBar();
 
 </body>
 </html>
-
-
