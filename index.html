@@ -463,12 +463,7 @@ body {
   <button class="dialog-btn" onclick="respondReschedule()">Reschedule</button>
 </div>
 
-
-    <div style="margin-top:12px;">
-   <button class="cancelBtn" style="background:#333;margin-top:8px;" onclick="closeLock()">Cancel</button>
-    </div>
-  </div>
-</div>
+  
 
 
 <!-- EDIT PANEL (for templates) -->
@@ -1381,6 +1376,80 @@ function devReset(){
 }
 
 /* ---------- START: spawn + intervals ---------- */
+  /* =========================================================
+   RESPONSE LOCK SYSTEM (prevents multi-click cheating)
+   ========================================================= */
+
+let responseLocked = false;
+
+function lockResponses(){
+  responseLocked = true;
+  document.querySelectorAll('#lockButtons button').forEach(btn=>{
+    btn.disabled = true;
+    btn.style.opacity = 0.5;
+    btn.style.cursor = 'not-allowed';
+  });
+}
+
+function unlockResponses(){
+  responseLocked = false;
+  document.querySelectorAll('#lockButtons button').forEach(btn=>{
+    btn.disabled = false;
+    btn.style.opacity = 1;
+    btn.style.cursor = 'pointer';
+  });
+}
+
+/* Override your existing handler safely */
+
+function handleUserResponse(resultKey){
+  if(!activeTask) return;
+
+  // stop spam clicking
+  if(responseLocked) return;
+
+  lockResponses();
+
+  const labelMap = {
+    completed: "I did it",
+    partial: "I started",
+    avoided: "I avoided it",
+    overwhelmed: "I was overwhelmed",
+    rescheduled: "Reschedule"
+  };
+
+  appendUserBubble(labelMap[resultKey] || resultKey);
+
+  setTimeout(()=>{
+    const reply = getDialogue(activeTask, resultKey);
+    appendNpcBubble(reply);
+  }, 300);
+
+  // store result
+  activeTask.response = resultKey;
+
+  if(resultKey === 'completed'){
+    activeTask.done = true;
+  }
+
+  save();
+  updateDayBar();
+
+  // close modal after reply
+  setTimeout(()=>{
+    closeLock();
+    unlockResponses();
+  }, 900);
+}
+
+/* Button wrappers */
+
+function respondCompleted(){ handleUserResponse('completed'); }
+function respondPartial(){ handleUserResponse('partial'); }
+function respondAvoided(){ handleUserResponse('avoided'); }
+function respondOverwhelmed(){ handleUserResponse('overwhelmed'); }
+function respondReschedule(){ handleUserResponse('rescheduled'); }
+
 spawnRecurring();
 setInterval(spawnRecurring, 60 * 60 * 1000); // hourly spawn
 setInterval(checkTasks, 60 * 1000); // check every minute
@@ -1392,6 +1461,7 @@ updateDayBar();
 
 </body>
 </html>
+
 
 
 
