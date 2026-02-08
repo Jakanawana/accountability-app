@@ -690,21 +690,28 @@ safeSet("tasks", JSON.stringify(tasks));
 
 /* ---------- CHARACTER DIALOGUE ENGINE ---------- */
 
-function appendNpcBubble(text, speakerName){
+function appendNpcBubble(text){
   const container = document.getElementById('dialogueLines');
   if(!container) return;
 
-  const row = document.createElement('div');
-  row.className = 'dialogue-row npc';
+  // split by line breaks
+  const parts = String(text).split('\n');
 
-  const bubble = document.createElement('div');
-  bubble.className = 'dialogue-bubble npc';
-  bubble.innerText = text || '';
+  parts.forEach((part, i) => {
+    const row = document.createElement('div');
+    row.className = 'dialogue-row npc';
 
-  row.appendChild(bubble);
-  container.appendChild(row);
+    const bubble = document.createElement('div');
+    bubble.className = 'dialogue-bubble npc';
+    bubble.innerText = part.trim();
+
+    row.appendChild(bubble);
+    container.appendChild(row);
+  });
+
   container.scrollTop = container.scrollHeight;
 }
+
 
 function appendUserBubble(text){
   const container = document.getElementById('dialogueLines');
@@ -812,6 +819,53 @@ If you can’t, set a five-minute timer and try one tiny, boring task.`},
 Stand up. Walk to the sink. That’s the minimum I will accept.`}
   ]
 }
+
+  const replyTrees = {
+
+  wake: {
+    avoided: {
+      question: "So what happened — why didn’t you get up?",
+      options: [
+        {
+          text: "I slept in",
+          reply: "Overslept, huh. Bed had you in a chokehold. Tomorrow we set two alarms — no mercy."
+        },
+        {
+          text: "I snoozed too much",
+          reply: "You hit snooze like it insulted your family. We’re putting the phone across the room."
+        },
+        {
+          text: "I was exhausted",
+          reply: "If you were genuinely exhausted, fair. But we adjust sleep time — not erase mornings."
+        },
+        {
+          text: "I didn’t want to get up",
+          reply: "Honest. Pathetic, but honest. Motivation comes after movement — not before."
+        }
+      ]
+    },
+
+    completed: {
+      question: "Alright. First thing you did after getting up?",
+      options: [
+        {
+          text: "Checked my phone",
+          reply: "Of course you did. Digital grave-digging at sunrise. Try water first tomorrow."
+        },
+        {
+          text: "Brushed teeth",
+          reply: "Functional adult behavior. Suspicious, but good."
+        },
+        {
+          text: "Showered",
+          reply: "You woke up AND showered? Who are you and what did you do with Jak."
+        }
+      ]
+    }
+  }
+
+};
+
 
   // you can add other types (music, exercise, etc.) below using the same format
 };
@@ -930,6 +984,39 @@ function showReplyInputIfNeeded(npcText){
         e.preventDefault();
         handleReplySend();
       }
+
+      function showReplyOptionsIfAny(task, resultKey){
+  const tree = replyTrees?.[task.type]?.[resultKey];
+  if(!tree) return;
+
+  appendNpcBubble(tree.question);
+
+  const container = document.getElementById('lockButtons');
+  if(!container) return;
+
+  // clear main buttons temporarily
+  container.innerHTML = '';
+
+  tree.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'dialog-btn';
+    btn.innerText = opt.text;
+
+    btn.onclick = () => {
+      appendUserBubble(opt.text);
+
+      setTimeout(()=>{
+        appendNpcBubble(opt.reply);
+
+        const continueBtn = document.getElementById('lockContinueBtn');
+        if(continueBtn) continueBtn.style.display = 'block';
+      }, 250);
+    };
+
+    container.appendChild(btn);
+  });
+}
+
     });
 
     replyWrap.appendChild(input);
@@ -1351,6 +1438,11 @@ function checkTasks() {
     setSpeakerName('Cole');
 
     appendNpcBubble(line);
+      showReplyInputIfNeeded(line);
+
+
+// NEW — allow replies if Cole asks something
+showReplyInputIfNeeded(line);
 
     document.getElementById('dialogTaskMeta').innerText =
       `[${t.type}] ${t.title}`;
@@ -1624,7 +1716,10 @@ function handleUserResponse(resultKey){
 setTimeout(()=>{
   // use resultKey (the correct variable)
   const reply = getDialogue(activeTask, resultKey);
-  appendNpcBubble(reply);
+appendNpcBubble(reply);
+
+showReplyOptionsIfAny(activeTask, resultKey);
+showReplyInputIfNeeded(reply);
 
   // if NPC asked a question, show a free-text reply input (so user can answer)
   showReplyInputIfNeeded(reply);
@@ -1696,6 +1791,7 @@ updateDayBar();
 
 </body>
 </html>
+
 
 
 
